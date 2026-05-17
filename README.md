@@ -6,6 +6,11 @@ Current proof status:
 - Local access receipt lifecycle is proven end to end.
 - Live Fiber testnet verification is not proven yet.
 
+Start here:
+- [`QUICKSTART.md`](QUICKSTART.md)
+- [`docs/reviewer-notes.md`](docs/reviewer-notes.md)
+- [`docs/live-fiber-next-steps.md`](docs/live-fiber-next-steps.md)
+
 What FiberLatch is:
 - backend-only
 - single-tenant

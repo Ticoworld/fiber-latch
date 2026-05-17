@@ -1,0 +1,35 @@
+# Reviewer Notes
+
+Start here:
+- [`QUICKSTART.md`](../QUICKSTART.md)
+- [`README.md`](../README.md)
+- [`docs/api-contract.md`](api-contract.md)
+- [`docs/state-machine.md`](state-machine.md)
+- [`docs/demo-proof.md`](demo-proof.md)
+
+What is proven:
+- the local receipt lifecycle works end to end
+- access intents persist
+- signed receipts are issued and verified
+- JWKS is served
+- redemption is atomic
+- duplicate redemption is rejected
+- reconciliation can issue a single receipt from the fake Fiber path
+
+What is simulated:
+- Fiber payment resolution
+- paid/unpaid/failed/expired status signals
+- the local demo payment success path
+
+What live Fiber proof still needs:
+- a real Fiber testnet endpoint
+- a real payment reference
+- a sanitized live verification run
+- confirmation of the live RPC envelope and auth behavior
+
+Why this does not overlap Spindle, checkout, POS, or creator tooling:
+- FiberLatch does not sell anything
+- FiberLatch does not collect payment at checkout
+- FiberLatch does not manage merchant operations
+- FiberLatch does not expose creator workflows
+- FiberLatch only verifies payment state and issues access receipts for a specific resource and subject
