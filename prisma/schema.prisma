@@ -37,7 +37,10 @@ enum EventLogType {
   RESOURCE_POLICY_CREATED
   RESOURCE_POLICY_UPDATED
   ACCESS_INTENT_CREATED
+  ACCESS_INTENT_PAYMENT_PENDING
   ACCESS_INTENT_VERIFIED
+  ACCESS_INTENT_REJECTED
+  ACCESS_INTENT_EXPIRED
   ACCESS_RECEIPT_ISSUED
   ACCESS_RECEIPT_VERIFIED
   ACCESS_RECEIPT_REDEEMED
@@ -64,26 +67,29 @@ model ResourcePolicy {
 }
 
 model AccessIntent {
-  id                    String           @id @default(cuid())
-  resourcePolicyId      String
-  resourcePolicy        ResourcePolicy   @relation("PolicyAccessIntents", fields: [resourcePolicyId], references: [id], onDelete: Restrict)
-  resourceKey           String
-  resourceType          ResourceType
-  subjectType           SubjectType
-  subjectId             String
-  paymentRef            String?          @unique
-  status                AccessIntentStatus @default(PENDING_VERIFICATION)
-  verifiedAt            DateTime?
-  receiptIssuedAt       DateTime?
-  expiresAt             DateTime?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  accessReceipt         AccessReceipt?    @relation("IntentReceipt")
-  eventLogs             EventLog[]        @relation("IntentEventLogs")
+  id                  String             @id @default(cuid())
+  resourcePolicyId    String
+  resourcePolicy      ResourcePolicy     @relation("PolicyAccessIntents", fields: [resourcePolicyId], references: [id], onDelete: Restrict)
+  resourceKey         String
+  resourceType        ResourceType
+  subjectType         SubjectType
+  subjectId           String
+  paymentRef          String?            @unique
+  idempotencyKey      String?            @unique
+  status              AccessIntentStatus @default(PENDING_VERIFICATION)
+  verifiedAt          DateTime?
+  receiptIssuedAt     DateTime?
+  expiresAt           DateTime?
+  fiberResponseJson   String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  accessReceipt       AccessReceipt?     @relation("IntentReceipt")
+  eventLogs           EventLog[]         @relation("IntentEventLogs")
 
   @@index([resourcePolicyId, resourceKey, resourceType])
   @@index([subjectType, subjectId])
   @@index([status, createdAt])
+  @@index([idempotencyKey])
 }
 
 model AccessReceipt {

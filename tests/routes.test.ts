@@ -46,6 +46,53 @@ describe("phase 3 routes", () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it("returns the existing intent for a repeated idempotency key", async () => {
+    const payload = {
+      resource: {
+        key: "resource:idempotent",
+        type: "CONTENT",
+      },
+      subject: {
+        type: "END_USER",
+        id: "subject_idempotent",
+      },
+      paymentRef: "unpaid:invoice_idempotent",
+      idempotencyKey: "intent-idempotency-key-001",
+    };
+
+    const firstResponse = await appContext.app.inject({
+      method: "POST",
+      url: "/v1/access-intents",
+      payload,
+    });
+    const secondResponse = await appContext.app.inject({
+      method: "POST",
+      url: "/v1/access-intents",
+      payload,
+    });
+
+    expect(firstResponse.statusCode).toBe(201);
+    expect(secondResponse.statusCode).toBe(200);
+
+    const first = firstResponse.json() as {
+      accessIntent: { id: string; status: string };
+    };
+    const second = secondResponse.json() as {
+      accessIntent: { id: string; status: string };
+    };
+
+    expect(second.accessIntent.id).toBe(first.accessIntent.id);
+    expect(second.accessIntent.status).toBe(first.accessIntent.status);
+
+    const storedCount = await appContext.prisma.accessIntent.count({
+      where: {
+        idempotencyKey: "intent-idempotency-key-001",
+      },
+    });
+
+    expect(storedCount).toBe(1);
+  });
+
   it("persists an access intent and issues a receipt for a paid fake payment", async () => {
     const createResponse = await appContext.app.inject({
       method: "POST",

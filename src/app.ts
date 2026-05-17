@@ -2,9 +2,9 @@ import Fastify, { type FastifyInstance } from "fastify";
 import { ZodError } from "zod";
 import type { PrismaClient } from "@prisma/client";
 import { loadRuntimeConfig, type FiberLatchRuntimeConfig } from "./config/runtime";
+import { createFiberClient } from "./config/fiber-client";
 import { loadReceiptSigningKeyMaterial, type ReceiptSigningKeyMaterial } from "./config/signing-key";
 import { prisma as defaultPrisma } from "./lib/prisma";
-import { createFakeFiberClient } from "./integrations/fiber/fake-fiber-client";
 import type { FiberClient } from "./integrations/fiber/fiber-client";
 import { createJwtAccessReceiptSigner } from "./integrations/receipts/jwt-access-receipt-signer";
 import type { AccessReceiptSigner } from "./integrations/receipts/access-receipt-signer";
@@ -27,7 +27,7 @@ export interface BuildAppOptions {
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
   const runtimeConfig = options.runtimeConfig ?? loadRuntimeConfig();
   const prisma = options.prisma ?? defaultPrisma;
-  const fiberClient = options.fiberClient ?? createFakeFiberClient();
+  const fiberClient = options.fiberClient ?? createFiberClient(runtimeConfig);
   const signingKeyMaterial =
     options.signingKeyMaterial ??
     (await loadReceiptSigningKeyMaterial({

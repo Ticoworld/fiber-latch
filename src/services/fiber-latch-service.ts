@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AccessIntentStatus, AccessReceiptStatus, PrismaClient } from "@prisma/client";
 import type { FiberClient } from "../integrations/fiber/fiber-client";
+import { mapFiberRawStatus } from "../integrations/fiber/fiber-status-mapper";
 import type {
   AccessReceiptClaims,
   AccessReceiptSigner,
@@ -8,12 +9,18 @@ import type {
 } from "../integrations/receipts/access-receipt-signer";
 import {
   createAccessIntent as createAccessIntentRecord,
+  getAccessIntentByIdempotencyKey,
   getAccessIntentById,
   markAccessIntentVerified,
+  markAccessIntentRejected,
+  markAccessIntentExpired,
+  updateAccessIntentFiberResponse,
   type AccessIntentWithRelations,
+  listReconcilableAccessIntents,
 } from "../repositories/access-intent-repository";
 import {
   createAccessReceipt,
+  getAccessReceiptByAccessIntentId,
   getAccessReceiptByJti,
   redeemAccessReceiptAtomically,
   setReceiptExpired,
@@ -36,7 +43,54 @@ export interface CreateAccessIntentInput {
     id: string;
   };
   paymentRef?: string | undefined;
+  idempotencyKey?: string | undefined;
 }
+
+export interface CreateAccessIntentResult {
+  accessIntent: AccessIntentView;
+  created: boolean;
+}
+
+export interface ReconciliationSummary {
+  inspected: number;
+  verified: number;
+  receiptsIssued: number;
+  expired: number;
+  rejected: number;
+  pending: number;
+}
+
+type AccessReceiptViewSource = {
+  id: string;
+  jti: string;
+  status: AccessReceiptStatus;
+  active: boolean;
+  redemptionCount: number;
+  maxRedemptions: number;
+  issuedAt: Date;
+  nbf: Date;
+  exp: Date;
+  redeemedAt: Date | null;
+  exhaustedAt: Date | null;
+  revokedAt: Date | null;
+};
+
+type AccessIntentViewSource = {
+  id: string;
+  resourcePolicyId: string;
+  resourceKey: string;
+  resourceType: "CONTENT" | "FILE" | "API";
+  subjectType: "END_USER" | "SERVICE_ACCOUNT";
+  subjectId: string;
+  paymentRef: string | null;
+  status: AccessIntentStatus;
+  verifiedAt: Date | null;
+  receiptIssuedAt: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  accessReceipt?: AccessReceiptViewSource | null;
+};
 
 export interface AccessReceiptView {
   id: string;
@@ -124,8 +178,19 @@ export class FiberLatchService {
     private readonly runtime: FiberLatchRuntimeConfig,
   ) {}
 
-  async createAccessIntent(input: CreateAccessIntentInput): Promise<AccessIntentView> {
+  async createAccessIntent(input: CreateAccessIntentInput): Promise<CreateAccessIntentResult> {
     return this.db.$transaction(async (tx) => {
+      const idempotencyKey = input.idempotencyKey?.trim() ?? null;
+      if (idempotencyKey) {
+        const existing = await getAccessIntentByIdempotencyKey(tx, idempotencyKey);
+        if (existing) {
+          return {
+            accessIntent: this.toAccessIntentView(existing, null, existing.accessReceipt ?? null),
+            created: false,
+          };
+        }
+      }
+
       const policy = await ensureResourcePolicy(tx, {
         resourceKey: input.resource.key,
         resourceType: input.resource.type,
@@ -134,13 +199,13 @@ export class FiberLatchService {
       });
 
       const paymentRef = input.paymentRef?.trim() ?? null;
-      const verifiedAt = paymentRef ? new Date() : null;
       const fiberVerification = paymentRef
         ? await this.fiberClient.verifyPayment({ paymentReference: paymentRef })
         : null;
-
-      const isPaid = fiberVerification?.verified ?? false;
+      const fiberMapping = mapFiberRawStatus(fiberVerification?.rawStatus ?? (fiberVerification?.verified ? "paid" : null));
       const intentExpiresAt = new Date(Date.now() + policy.receiptTtlSeconds * 1000);
+      const issuedAt = fiberVerification?.settledAt ? new Date(fiberVerification.settledAt) : new Date();
+      const shouldIssueImmediately = this.fiberClient.mode === "fake" && fiberMapping.shouldIssueReceipt;
 
       const intent = await createAccessIntentRecord(tx, {
         resourcePolicyId: policy.id,
@@ -149,10 +214,23 @@ export class FiberLatchService {
         subjectType: input.subject.type,
         subjectId: input.subject.id,
         paymentRef,
-        status: isPaid ? "VERIFIED" : "PENDING_VERIFICATION",
-        verifiedAt: isPaid ? verifiedAt : null,
-        receiptIssuedAt: null,
+        idempotencyKey,
+        status: shouldIssueImmediately
+          ? "RECEIPT_ISSUED"
+          : fiberMapping.intentStatus,
+        verifiedAt:
+          fiberMapping.shouldIssueReceipt || fiberMapping.intentStatus !== "PENDING_VERIFICATION"
+            ? issuedAt
+            : null,
+        receiptIssuedAt: shouldIssueImmediately ? issuedAt : null,
         expiresAt: intentExpiresAt,
+        fiberResponseJson: this.safeJsonStringify({
+          rawStatus: fiberVerification?.rawStatus ?? null,
+          invoiceStatus: fiberVerification?.invoiceStatus ?? null,
+          transactionHash: fiberVerification?.transactionHash ?? null,
+          settledAt: fiberVerification?.settledAt ?? null,
+          rawResponse: fiberVerification?.rawResponse ?? null,
+        }),
       });
 
       await appendEventLog(tx, {
@@ -165,89 +243,109 @@ export class FiberLatchService {
         subjectId: input.subject.id,
         payload: {
           paymentRef,
+          idempotencyKey,
           invoiceStatus: fiberVerification?.invoiceStatus ?? "UNKNOWN",
-          transactionHash: fiberVerification?.transactionHash ?? null,
+          rawStatus: fiberVerification?.rawStatus ?? null,
         },
       });
 
-      if (!isPaid) {
-        return this.toAccessIntentView(intent, null);
+      if (!fiberVerification || fiberMapping.normalizedState === "waiting" || fiberMapping.normalizedState === "payment_pending") {
+        await appendEventLog(tx, {
+          eventType: "ACCESS_INTENT_PAYMENT_PENDING",
+          resourcePolicyId: policy.id,
+          resourceKey: input.resource.key,
+          resourceType: input.resource.type,
+          accessIntentId: intent.id,
+          subjectType: input.subject.type,
+          subjectId: input.subject.id,
+          payload: {
+            paymentRef,
+            rawStatus: fiberVerification?.rawStatus ?? null,
+          },
+        });
       }
 
-      const issuedAt = fiberVerification?.settledAt ? new Date(fiberVerification.settledAt) : new Date();
-      const notBefore = issuedAt;
-      const expiresAt = new Date(issuedAt.getTime() + policy.receiptTtlSeconds * 1000);
-      const jti = randomUUID();
-      const grantType = policy.maxRedemptions === 1 ? "single_redemption" : "multi_redemption";
-      const signed = await this.receiptSigner.sign({
-        subjectId: input.subject.id,
-        audience: this.runtime.audience,
-        issuer: this.runtime.issuer,
-        issuedAt,
-        notBefore,
-        expiresAt,
-        jti,
-        intentId: intent.id,
-        resourceId: policy.resourceKey,
-        policyId: policy.id,
+      if (fiberMapping.normalizedState === "expired") {
+        await appendEventLog(tx, {
+          eventType: "ACCESS_INTENT_EXPIRED",
+          resourcePolicyId: policy.id,
+          resourceKey: input.resource.key,
+          resourceType: input.resource.type,
+          accessIntentId: intent.id,
+          subjectType: input.subject.type,
+          subjectId: input.subject.id,
+          payload: {
+            paymentRef,
+            rawStatus: fiberVerification?.rawStatus ?? null,
+          },
+        });
+        const expiredIntent = await markAccessIntentExpired(tx, intent.id);
+        const hydratedExpiredIntent = (await getAccessIntentById(tx, expiredIntent.id)) ?? intent;
+        return {
+          accessIntent: this.toAccessIntentView(hydratedExpiredIntent, null),
+          created: true,
+        };
+      }
+
+      if (fiberMapping.normalizedState === "failed") {
+        await appendEventLog(tx, {
+          eventType: "ACCESS_INTENT_REJECTED",
+          resourcePolicyId: policy.id,
+          resourceKey: input.resource.key,
+          resourceType: input.resource.type,
+          accessIntentId: intent.id,
+          subjectType: input.subject.type,
+          subjectId: input.subject.id,
+          payload: {
+            paymentRef,
+            rawStatus: fiberVerification?.rawStatus ?? null,
+          },
+        });
+        const rejectedIntent = await markAccessIntentRejected(tx, intent.id);
+        const hydratedRejectedIntent = (await getAccessIntentById(tx, rejectedIntent.id)) ?? intent;
+        return {
+          accessIntent: this.toAccessIntentView(hydratedRejectedIntent, null),
+          created: true,
+        };
+      }
+
+      if (!fiberVerification || !fiberMapping.shouldIssueReceipt || this.fiberClient.mode === "real") {
+        if (fiberMapping.normalizedState === "paid_verified" && this.fiberClient.mode === "real") {
+          await appendEventLog(tx, {
+            eventType: "ACCESS_INTENT_VERIFIED",
+            resourcePolicyId: policy.id,
+            resourceKey: input.resource.key,
+            resourceType: input.resource.type,
+            accessIntentId: intent.id,
+            subjectType: input.subject.type,
+            subjectId: input.subject.id,
+            payload: {
+              paymentRef,
+              rawStatus: fiberVerification?.rawStatus ?? null,
+              verifiedAt: issuedAt.toISOString(),
+            },
+          });
+        }
+
+        const hydratedIntent = await getAccessIntentById(tx, intent.id);
+        return {
+          accessIntent: this.toAccessIntentView(hydratedIntent ?? intent, null),
+          created: true,
+        };
+      }
+
+      const issuance = await this.issueReceiptForIntent(tx, {
+        intent: (await getAccessIntentById(tx, intent.id)) ?? intent,
+        policy,
+        subject: input.subject,
         paymentRef,
-        grantType,
-        maxRedemptions: policy.maxRedemptions,
-      } satisfies AccessReceiptSignInput);
-
-      const receipt = await createAccessReceipt(tx, {
-        resourcePolicyId: policy.id,
-        accessIntentId: intent.id,
-        jti,
-        receiptTokenHash: sha256Hex(signed.token),
-        resourceKey: input.resource.key,
-        resourceType: input.resource.type,
-        subjectType: input.subject.type,
-        subjectId: input.subject.id,
-        status: "ISSUED",
-        active: true,
-        maxRedemptions: policy.maxRedemptions,
-        redemptionCount: 0,
         issuedAt,
-        nbf: notBefore,
-        exp: expiresAt,
       });
 
-      const updatedIntent = await markAccessIntentVerified(tx, intent.id, issuedAt, issuedAt);
-
-      await appendEventLog(tx, {
-        eventType: "ACCESS_INTENT_VERIFIED",
-        resourcePolicyId: policy.id,
-        resourceKey: input.resource.key,
-        resourceType: input.resource.type,
-        accessIntentId: intent.id,
-        accessReceiptId: receipt.id,
-        subjectType: input.subject.type,
-        subjectId: input.subject.id,
-        payload: {
-          paymentRef,
-          jti,
-        },
-      });
-
-      await appendEventLog(tx, {
-        eventType: "ACCESS_RECEIPT_ISSUED",
-        resourcePolicyId: policy.id,
-        resourceKey: input.resource.key,
-        resourceType: input.resource.type,
-        accessIntentId: intent.id,
-        accessReceiptId: receipt.id,
-        subjectType: input.subject.type,
-        subjectId: input.subject.id,
-        payload: {
-          paymentRef,
-          jti,
-          maxRedemptions: policy.maxRedemptions,
-        },
-      });
-
-      const intentWithReceipt = await getAccessIntentById(tx, updatedIntent.id);
-      return this.toAccessIntentView(intentWithReceipt ?? updatedIntent, signed.token, receipt);
+      return {
+        accessIntent: this.toAccessIntentView(issuance.intent, issuance.receiptToken, issuance.receipt),
+        created: true,
+      };
     });
   }
 
@@ -572,14 +670,314 @@ export class FiberLatchService {
     };
   }
 
+  async reconcileOpenAccessIntents(): Promise<ReconciliationSummary> {
+    const candidates = await listReconcilableAccessIntents(this.db);
+    const summary: ReconciliationSummary = {
+      inspected: 0,
+      verified: 0,
+      receiptsIssued: 0,
+      expired: 0,
+      rejected: 0,
+      pending: 0,
+    };
+
+    for (const candidate of candidates) {
+      summary.inspected += 1;
+      const outcome = await this.reconcileSingleAccessIntent(candidate.id);
+
+      switch (outcome) {
+        case "VERIFIED":
+          summary.verified += 1;
+          summary.receiptsIssued += 1;
+          break;
+        case "EXPIRED":
+          summary.expired += 1;
+          break;
+        case "REJECTED":
+          summary.rejected += 1;
+          break;
+        default:
+          summary.pending += 1;
+          break;
+      }
+    }
+
+    return summary;
+  }
+
   async getPublicJwks() {
     return this.receiptSigner.getPublicJwks();
   }
 
+  private async reconcileSingleAccessIntent(
+    accessIntentId: string,
+  ): Promise<"PENDING" | "VERIFIED" | "REJECTED" | "EXPIRED"> {
+    return this.db.$transaction(async (tx) => {
+      const intent = await getAccessIntentById(tx, accessIntentId);
+
+      if (!intent) {
+        return "PENDING";
+      }
+
+      if (intent.accessReceipt && intent.status === "RECEIPT_ISSUED") {
+        return "VERIFIED";
+      }
+
+      const now = new Date();
+
+      if (!intent.paymentRef) {
+        if (intent.expiresAt && intent.expiresAt <= now && intent.status !== "EXPIRED") {
+          await appendEventLog(tx, {
+            eventType: "ACCESS_INTENT_EXPIRED",
+            resourcePolicyId: intent.resourcePolicyId,
+            resourceKey: intent.resourceKey,
+            resourceType: intent.resourceType,
+            accessIntentId: intent.id,
+            subjectType: intent.subjectType,
+            subjectId: intent.subjectId,
+            payload: {
+              reason: "NO_PAYMENT_REFERENCE",
+            },
+          });
+          await markAccessIntentExpired(tx, intent.id);
+          return "EXPIRED";
+        }
+
+        return "PENDING";
+      }
+
+      const fiberVerification = await this.fiberClient.verifyPayment({
+        paymentReference: intent.paymentRef,
+      });
+      const fiberMapping = mapFiberRawStatus(fiberVerification.rawStatus ?? (fiberVerification.verified ? "paid" : null));
+
+      await updateAccessIntentFiberResponse(
+        tx,
+        intent.id,
+        this.safeJsonStringify({
+          rawStatus: fiberVerification.rawStatus ?? null,
+          invoiceStatus: fiberVerification.invoiceStatus,
+          transactionHash: fiberVerification.transactionHash,
+          settledAt: fiberVerification.settledAt,
+          rawResponse: fiberVerification.rawResponse ?? null,
+        }),
+      );
+
+      if (fiberMapping.normalizedState === "paid_verified") {
+        const policy = intent.resourcePolicy;
+        const issuedAt = fiberVerification.settledAt ? new Date(fiberVerification.settledAt) : now;
+        await this.issueReceiptForIntent(tx, {
+          intent,
+          policy: {
+            id: policy.id,
+            resourceKey: policy.resourceKey,
+            maxRedemptions: policy.maxRedemptions,
+            receiptTtlSeconds: policy.receiptTtlSeconds,
+          },
+          subject: {
+            type: intent.subjectType,
+            id: intent.subjectId,
+          },
+          paymentRef: intent.paymentRef,
+          issuedAt,
+        });
+        return "VERIFIED";
+      }
+
+      if (fiberMapping.normalizedState === "expired") {
+        if (intent.status !== "EXPIRED") {
+          await appendEventLog(tx, {
+            eventType: "ACCESS_INTENT_EXPIRED",
+            resourcePolicyId: intent.resourcePolicyId,
+            resourceKey: intent.resourceKey,
+            resourceType: intent.resourceType,
+            accessIntentId: intent.id,
+            subjectType: intent.subjectType,
+            subjectId: intent.subjectId,
+            payload: {
+              paymentRef: intent.paymentRef,
+              rawStatus: fiberVerification.rawStatus ?? null,
+            },
+          });
+          await markAccessIntentExpired(tx, intent.id);
+        }
+        return "EXPIRED";
+      }
+
+      if (fiberMapping.normalizedState === "failed") {
+        if (intent.status !== "REJECTED") {
+          await appendEventLog(tx, {
+            eventType: "ACCESS_INTENT_REJECTED",
+            resourcePolicyId: intent.resourcePolicyId,
+            resourceKey: intent.resourceKey,
+            resourceType: intent.resourceType,
+            accessIntentId: intent.id,
+            subjectType: intent.subjectType,
+            subjectId: intent.subjectId,
+            payload: {
+              paymentRef: intent.paymentRef,
+              rawStatus: fiberVerification.rawStatus ?? null,
+            },
+          });
+          await markAccessIntentRejected(tx, intent.id);
+        }
+        return "REJECTED";
+      }
+
+      return "PENDING";
+    });
+  }
+
+  private async issueReceiptForIntent(
+    tx: DbClient,
+    input: {
+      intent: AccessIntentViewSource;
+      policy: {
+        id: string;
+        resourceKey: string;
+        receiptTtlSeconds: number;
+        maxRedemptions: number;
+      };
+      subject: {
+        type: "END_USER" | "SERVICE_ACCOUNT";
+        id: string;
+      };
+      paymentRef: string | null;
+      issuedAt: Date;
+    },
+  ): Promise<{ intent: AccessIntentViewSource; receipt: AccessReceiptViewSource; receiptToken: string | null }> {
+    const existingReceipt = await getAccessReceiptByAccessIntentId(tx, input.intent.id);
+    if (existingReceipt) {
+      if (input.intent.status !== "RECEIPT_ISSUED") {
+        await markAccessIntentVerified(tx, input.intent.id, existingReceipt.issuedAt, existingReceipt.issuedAt);
+      }
+
+      const hydratedIntent = await getAccessIntentById(tx, input.intent.id);
+      return {
+        intent: hydratedIntent ?? input.intent,
+        receipt: existingReceipt,
+        receiptToken: null,
+      };
+    }
+
+    const notBefore = input.issuedAt;
+    const expiresAt = new Date(input.issuedAt.getTime() + input.policy.receiptTtlSeconds * 1000);
+    const jti = randomUUID();
+    const grantType = input.policy.maxRedemptions === 1 ? "single_redemption" : "multi_redemption";
+    const signed = await this.receiptSigner.sign({
+      subjectId: input.subject.id,
+      audience: this.runtime.audience,
+      issuer: this.runtime.issuer,
+      issuedAt: input.issuedAt,
+      notBefore,
+      expiresAt,
+      jti,
+      intentId: input.intent.id,
+      resourceId: input.policy.resourceKey,
+      policyId: input.policy.id,
+      paymentRef: input.paymentRef,
+      grantType,
+      maxRedemptions: input.policy.maxRedemptions,
+    } satisfies AccessReceiptSignInput);
+
+    let receipt!: AccessReceiptViewSource;
+    try {
+      receipt = await createAccessReceipt(tx, {
+        resourcePolicyId: input.policy.id,
+        accessIntentId: input.intent.id,
+        jti,
+        receiptTokenHash: sha256Hex(signed.token),
+        resourceKey: input.intent.resourceKey,
+        resourceType: input.intent.resourceType,
+        subjectType: input.subject.type,
+        subjectId: input.subject.id,
+        status: "ISSUED",
+        active: true,
+        maxRedemptions: input.policy.maxRedemptions,
+        redemptionCount: 0,
+        issuedAt: input.issuedAt,
+        nbf: notBefore,
+        exp: expiresAt,
+      });
+    } catch (error) {
+      const code = typeof error === "object" && error !== null ? (error as { code?: string }).code : null;
+      if (code !== "P2002") {
+        throw error;
+      }
+
+      const existing = await getAccessReceiptByAccessIntentId(tx, input.intent.id);
+      if (!existing) {
+        throw error;
+      }
+
+      if (input.intent.status !== "RECEIPT_ISSUED") {
+        await markAccessIntentVerified(tx, input.intent.id, existing.issuedAt, existing.issuedAt);
+      }
+
+      return {
+        intent: (await getAccessIntentById(tx, input.intent.id)) ?? input.intent,
+        receipt: existing,
+        receiptToken: null,
+      };
+    }
+
+    if (!receipt) {
+      throw new Error("Failed to create access receipt");
+    }
+
+    const updatedIntent = await markAccessIntentVerified(tx, input.intent.id, input.issuedAt, input.issuedAt);
+
+    await appendEventLog(tx, {
+      eventType: "ACCESS_INTENT_VERIFIED",
+      resourcePolicyId: input.policy.id,
+      resourceKey: input.intent.resourceKey,
+      resourceType: input.intent.resourceType,
+      accessIntentId: input.intent.id,
+      accessReceiptId: receipt.id,
+      subjectType: input.subject.type,
+      subjectId: input.subject.id,
+      payload: {
+        paymentRef: input.paymentRef,
+        jti,
+      },
+    });
+
+    await appendEventLog(tx, {
+      eventType: "ACCESS_RECEIPT_ISSUED",
+      resourcePolicyId: input.policy.id,
+      resourceKey: input.intent.resourceKey,
+      resourceType: input.intent.resourceType,
+      accessIntentId: input.intent.id,
+      accessReceiptId: receipt.id,
+      subjectType: input.subject.type,
+      subjectId: input.subject.id,
+      payload: {
+        paymentRef: input.paymentRef,
+        jti,
+        maxRedemptions: input.policy.maxRedemptions,
+      },
+    });
+
+    const hydratedIntent = await getAccessIntentById(tx, updatedIntent.id);
+    return {
+      intent: hydratedIntent ?? input.intent,
+      receipt,
+      receiptToken: signed.token,
+    };
+  }
+
+  private safeJsonStringify(value: unknown): string | null {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return null;
+    }
+  }
+
   private toAccessIntentView(
-    intent: AccessIntentWithRelations | Awaited<ReturnType<typeof createAccessIntentRecord>> | Awaited<ReturnType<typeof markAccessIntentVerified>>,
+    intent: AccessIntentViewSource | AccessIntentWithRelations | Awaited<ReturnType<typeof createAccessIntentRecord>> | Awaited<ReturnType<typeof markAccessIntentVerified>>,
     receiptToken: string | null,
-    receipt: AccessReceiptWithRelations | Awaited<ReturnType<typeof createAccessReceipt>> | null = null,
+    receipt: AccessReceiptViewSource | AccessReceiptWithRelations | Awaited<ReturnType<typeof createAccessReceipt>> | null = null,
   ): AccessIntentView {
     return {
       id: intent.id,

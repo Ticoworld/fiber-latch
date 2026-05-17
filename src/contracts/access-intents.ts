@@ -43,6 +43,7 @@ export const CreateAccessIntentRequestSchema = z.object({
   resource: ResourceSchema,
   subject: SubjectSchema,
   paymentRef: z.string().min(1).optional(),
+  idempotencyKey: z.string().min(1).max(128).optional(),
 });
 
 export const CreateAccessIntentResponseSchema = z.object({

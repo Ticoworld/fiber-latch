@@ -16,11 +16,11 @@ export function registerAccessIntentRoutes(
 ): void {
   app.post("/v1/access-intents", async (request, reply) => {
     const body = CreateAccessIntentRequestSchema.parse(request.body);
-    const accessIntent = await dependencies.service.createAccessIntent(body);
+    const result = await dependencies.service.createAccessIntent(body);
 
-    return reply.code(201).send(
+    return reply.code(result.created ? 201 : 200).send(
       CreateAccessIntentResponseSchema.parse({
-        accessIntent,
+        accessIntent: result.accessIntent,
       }),
     );
   });

@@ -1,22 +1,30 @@
 import { execFileSync } from "node:child_process";
 import { rmSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { buildApp } from "../../src/app";
 import type { FiberLatchRuntimeConfig } from "../../src/config/runtime";
+import type { FiberClient } from "../../src/integrations/fiber/fiber-client";
+import type { FiberLatchService } from "../../src/services/fiber-latch-service";
 
 export interface TestAppContext {
   app: Awaited<ReturnType<typeof buildApp>>;
   prisma: PrismaClient;
+  service: FiberLatchService;
   cleanup: () => Promise<void>;
 }
 
 export async function createTestApp(
   runtimeOverrides: Partial<FiberLatchRuntimeConfig> = {},
+  fiberClient?: FiberClient,
 ): Promise<TestAppContext> {
-  const dbFileName = "debug-test.db";
+  const dbFileName = `debug-test-${randomUUID()}.db`;
   const dbFile = path.join(process.cwd(), dbFileName);
   const databaseUrl = `file:./${dbFileName}`;
+
+  rmSync(dbFile, { force: true });
+  rmSync(`${dbFile}-journal`, { force: true });
 
   execFileSync(
     process.execPath,
@@ -24,7 +32,6 @@ export async function createTestApp(
       path.join(process.cwd(), "node_modules", "prisma", "build", "index.js"),
       "db",
       "push",
-      "--force-reset",
       "--skip-generate",
       "--accept-data-loss",
     ],
@@ -33,6 +40,9 @@ export async function createTestApp(
       env: {
         ...process.env,
         DATABASE_URL: databaseUrl,
+        RUST_BACKTRACE: "1",
+        RUST_LOG: "debug",
+        PRISMA_LOG_LEVEL: "debug",
       },
       stdio: "pipe",
     },
@@ -47,6 +57,12 @@ export async function createTestApp(
   });
 
   const runtimeConfig: FiberLatchRuntimeConfig = {
+    fiberClientMode: "fake",
+    fiberNetwork: "testnet",
+    fiberRpcUrl: null,
+    fiberRpcAuthToken: null,
+    fiberPollIntervalMs: 15000,
+    fiberInvoiceTimeoutSeconds: 900,
     issuer: "fiber-latch:testnet",
     audience: "fiber-latch-access",
     receiptTtlSeconds: 3600,
@@ -58,6 +74,7 @@ export async function createTestApp(
   const app = await buildApp({
     prisma,
     runtimeConfig,
+    fiberClient,
     logger: false,
   });
 
@@ -66,6 +83,7 @@ export async function createTestApp(
   return {
     app,
     prisma,
+    service: app.fiberLatch,
     cleanup: async () => {
       await app.close();
       await prisma.$disconnect();

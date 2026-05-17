@@ -70,6 +70,19 @@ export async function getAccessReceiptByJti(
   });
 }
 
+export async function getAccessReceiptByAccessIntentId(
+  db: DbClient,
+  accessIntentId: string,
+): Promise<AccessReceiptWithRelations | null> {
+  return db.accessReceipt.findUnique({
+    where: { accessIntentId },
+    include: {
+      accessIntent: true,
+      resourcePolicy: true,
+    },
+  });
+}
+
 export interface RedeemAccessReceiptResult {
   updated: boolean;
   receipt: AccessReceiptWithRelations | null;
