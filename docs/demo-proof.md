@@ -11,6 +11,11 @@ What the demo proves:
 - a second redemption is rejected
 - the JWKS and receipt-signing path still work in the same flow
 
+Timing note:
+- the demo prints the receipt state as `ISSUED` immediately after issuance
+- after the first redemption, the stored receipt becomes exhausted and `active` becomes `false`
+- the demo summary shows both moments so the lifecycle is explicit
+
 What is real:
 - Fastify route handling
 - Prisma persistence
