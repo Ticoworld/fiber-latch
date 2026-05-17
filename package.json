@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "fiber:testnet:verify": "tsx scripts/fiber-testnet-verify.ts",
+    "demo:local-access": "tsx scripts/demo-local-access.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
