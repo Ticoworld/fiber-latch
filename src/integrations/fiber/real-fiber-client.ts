@@ -31,10 +31,10 @@ export interface RealFiberClientOptions {
 function toMaskedReference(reference: string): string {
   const trimmed = reference.trim();
   if (trimmed.length <= 10) {
-    return `${trimmed.slice(0, 4)}…${trimmed.slice(-2)}`;
+    return `${trimmed.slice(0, 4)}...${trimmed.slice(-2)}`;
   }
 
-  return `${trimmed.slice(0, 6)}…${trimmed.slice(-4)}`;
+  return `${trimmed.slice(0, 6)}...${trimmed.slice(-4)}`;
 }
 
 function readStringField(value: unknown, keys: string[]): string | null {
