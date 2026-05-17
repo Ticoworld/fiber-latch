@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ResourceType {
+  CONTENT
+  FILE
+  API
+}
+
+enum SubjectType {
+  END_USER
+  SERVICE_ACCOUNT
+}
+
+enum AccessIntentStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  RECEIPT_ISSUED
+  REJECTED
+  EXPIRED
+}
+
+enum AccessReceiptStatus {
+  ISSUED
+  EXHAUSTED
+  REVOKED
+  EXPIRED
+}
+
+enum EventLogType {
+  RESOURCE_POLICY_CREATED
+  RESOURCE_POLICY_UPDATED
+  ACCESS_INTENT_CREATED
+  ACCESS_INTENT_VERIFIED
+  ACCESS_RECEIPT_ISSUED
+  ACCESS_RECEIPT_VERIFIED
+  ACCESS_RECEIPT_REDEEMED
+  ACCESS_RECEIPT_REDEMPTION_REJECTED
+  ACCESS_RECEIPT_REVOKED
+}
+
+model ResourcePolicy {
+  id                String          @id @default(cuid())
+  resourceKey       String
+  resourceType      ResourceType
+  policyVersion     Int             @default(1)
+  receiptTtlSeconds Int             @default(3600)
+  maxRedemptions    Int             @default(1)
+  active            Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  accessIntents     AccessIntent[]   @relation("PolicyAccessIntents")
+  accessReceipts    AccessReceipt[]  @relation("PolicyAccessReceipts")
+  eventLogs         EventLog[]       @relation("PolicyEventLogs")
+
+  @@unique([resourceKey, resourceType])
+  @@index([active, resourceType])
+}
+
+model AccessIntent {
+  id                    String           @id @default(cuid())
+  resourcePolicyId      String
+  resourcePolicy        ResourcePolicy   @relation("PolicyAccessIntents", fields: [resourcePolicyId], references: [id], onDelete: Restrict)
+  resourceKey           String
+  resourceType          ResourceType
+  subjectType           SubjectType
+  subjectId             String
+  paymentRef            String?          @unique
+  status                AccessIntentStatus @default(PENDING_VERIFICATION)
+  verifiedAt            DateTime?
+  receiptIssuedAt       DateTime?
+  expiresAt             DateTime?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  accessReceipt         AccessReceipt?    @relation("IntentReceipt")
+  eventLogs             EventLog[]        @relation("IntentEventLogs")
+
+  @@index([resourcePolicyId, resourceKey, resourceType])
+  @@index([subjectType, subjectId])
+  @@index([status, createdAt])
+}
+
+model AccessReceipt {
+  id                 String             @id @default(cuid())
+  resourcePolicyId   String
+  resourcePolicy     ResourcePolicy     @relation("PolicyAccessReceipts", fields: [resourcePolicyId], references: [id], onDelete: Restrict)
+  accessIntentId     String             @unique
+  accessIntent      AccessIntent       @relation("IntentReceipt", fields: [accessIntentId], references: [id], onDelete: Restrict)
+  jti               String             @unique
+  receiptTokenHash   String?            @unique
+  resourceKey        String
+  resourceType       ResourceType
+  subjectType        SubjectType
+  subjectId          String
+  status             AccessReceiptStatus @default(ISSUED)
+  active             Boolean            @default(true)
+  maxRedemptions     Int
+  redemptionCount    Int                @default(0)
+  issuedAt           DateTime           @default(now())
+  nbf                DateTime
+  exp                DateTime
+  redeemedAt         DateTime?
+  exhaustedAt        DateTime?
+  revokedAt          DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  eventLogs          EventLog[]         @relation("ReceiptEventLogs")
+
+  @@index([resourcePolicyId, resourceKey, resourceType])
+  @@index([subjectType, subjectId])
+  @@index([status, active, createdAt])
+}
+
+model EventLog {
+  id               String          @id @default(cuid())
+  eventType        EventLogType
+  resourcePolicyId  String?
+  resourcePolicy    ResourcePolicy? @relation("PolicyEventLogs", fields: [resourcePolicyId], references: [id], onDelete: SetNull)
+  resourceKey      String?
+  resourceType     ResourceType?
+  accessIntentId    String?
+  accessIntent     AccessIntent?   @relation("IntentEventLogs", fields: [accessIntentId], references: [id], onDelete: SetNull)
+  accessReceiptId  String?
+  accessReceipt    AccessReceipt?  @relation("ReceiptEventLogs", fields: [accessReceiptId], references: [id], onDelete: SetNull)
+  subjectType      SubjectType?
+  subjectId        String?
+  payloadJson      String?
+  createdAt        DateTime        @default(now())
+
+  @@index([eventType, createdAt])
+  @@index([resourcePolicyId, createdAt])
+  @@index([accessIntentId, createdAt])
+  @@index([accessReceiptId, createdAt])
+}

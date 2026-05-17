@@ -1,0 +1,11 @@
+node_modules
+.env
+.env.local
+dist
+coverage
+.DS_Store
+dev.db
+dev.db-journal
+*.sqlite
+*.sqlite3
+.tmp-fiberlatch-*
