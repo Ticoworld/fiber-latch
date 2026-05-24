@@ -175,6 +175,7 @@ Sanitized retry output:
     ]
   },
   "node1ToNode2": {
+    "readyCkbChannelCount": 89,
     "readyChannelsToNode2": [
       {
         "channelId": "0x922e22e8...97e31aa2",
@@ -188,8 +189,13 @@ Sanitized retry output:
     ]
   },
   "invoiceCreate": {
-    "invoiceAddress": "fibt11pmcs...qqcq9rp9",
-    "paymentHash": "0x2382c53c...65e36d06"
+    "amount": "0x5f5e100",
+    "currency": "Fibt",
+    "expiry": "0xe10",
+    "usedPaymentPreimage": true,
+    "paymentPreimagePrinted": false,
+    "invoiceAddress": "fibt100000...qp3s9alu",
+    "paymentHash": "0x3959f4c1...ad56ea6a"
   },
   "sendPayment": {
     "hasError": true,
@@ -207,7 +213,9 @@ Sanitized retry output:
 Route retry result:
 
 - local channel to node1: `ChannelReady`
-- node1 to node2 ready channels: yes
+- node1 to node2 ready CKB channels: 89
+- fresh invoice amount: `0x5f5e100`
+- `payment_preimage` used: yes, not printed
 - `send_payment`: failed
 - `get_payment`: `Failed`
 - `get_invoice`: `Open`
@@ -282,4 +290,4 @@ FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligne
 - `npm run build`
 - `npm run demo:local-access`
 - `Start-Sleep -Seconds 180`
-- combined Node route retry script covering local `node_info`, `list_channels`, public `new_invoice`, local `send_payment`, local `get_payment`, and node2 `get_invoice`
+- combined Node route retry script covering node1-to-node2 `list_channels`, exact guide-shaped public `new_invoice`, local `send_payment`, local `get_payment`, and node2 `get_invoice`

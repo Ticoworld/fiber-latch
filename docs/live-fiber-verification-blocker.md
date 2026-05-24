@@ -54,7 +54,8 @@ Phase 2G update:
 - no private key, seed phrase, mnemonic, password, keystore, or node runtime secret was printed or committed
 - manual account creation and funding instructions are documented in `docs/local-fiber-account-funding.md`
 - the local node is running and has a `ChannelReady` channel to public node1
-- public node1 reports multiple `ChannelReady` channels to public node2
+- public node1 reports 89 ready CKB channels to public node2 in the latest exact guide-shaped retry
+- a fresh public node2 invoice was created with amount `0x5f5e100`, currency `Fibt`, expiry `0xe10`, and generated `payment_preimage`
 - a fresh public node2 invoice still could not be paid from the local node
 - `send_payment` failed with `PathFind error: no path found`
 - `get_payment` returned `Failed`
