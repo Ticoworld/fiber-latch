@@ -16,6 +16,9 @@ What is proven:
 - duplicate redemption is rejected
 - reconciliation can issue a single receipt from the fake Fiber path
 
+What is aligned but not live-proven:
+- the real Fiber adapter matches the official Fiber v0.8.1 RPC method names, params shape, and status vocabulary
+
 What is simulated:
 - Fiber payment resolution
 - paid/unpaid/failed/expired status signals
@@ -23,9 +26,9 @@ What is simulated:
 
 What live Fiber proof still needs:
 - a real Fiber testnet endpoint
-- a real payment reference
+- a real paid Fiber `payment_hash`
 - a sanitized live verification run
-- confirmation of the live RPC envelope and auth behavior
+- confirmation of any endpoint-specific auth behavior, if applicable
 
 Why this does not overlap Spindle, checkout, POS, or creator tooling:
 - FiberLatch does not sell anything

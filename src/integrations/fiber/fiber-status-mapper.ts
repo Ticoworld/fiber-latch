@@ -15,8 +15,12 @@ export interface FiberStatusMapping {
   isTerminal: boolean;
 }
 
-const OPEN_STATUS_VALUES = new Set(["open", "unpaid", "pending", "created"]);
-const PAID_STATUS_VALUES = new Set(["paid", "succeeded", "settled", "confirmed", "finalized"]);
+// Official Fiber v0.8.1 statuses are:
+// - invoice: Open, Cancelled, Expired, Received, Paid
+// - payment: Created, Inflight, Success, Failed
+// We keep a few legacy local-only values so the fake adapter and existing demo remain compatible.
+const PENDING_STATUS_VALUES = new Set(["open", "received", "created", "inflight", "unpaid", "pending"]);
+const PAID_STATUS_VALUES = new Set(["paid", "success", "succeeded", "settled", "confirmed", "finalized"]);
 const EXPIRED_STATUS_VALUES = new Set(["expired", "timed_out", "timeout", "timedout"]);
 const FAILED_STATUS_VALUES = new Set(["failed", "canceled", "cancelled", "rejected"]);
 
@@ -36,9 +40,9 @@ export function mapFiberRawStatus(rawStatus: string | null | undefined): FiberSt
 
   const normalized = normalizeStatusValue(rawStatus);
 
-  if (OPEN_STATUS_VALUES.has(normalized)) {
+  if (PENDING_STATUS_VALUES.has(normalized)) {
     return {
-      normalizedState: normalized === "created" ? "waiting" : "payment_pending",
+      normalizedState: "payment_pending",
       intentStatus: "PENDING_VERIFICATION",
       shouldIssueReceipt: false,
       isTerminal: false,

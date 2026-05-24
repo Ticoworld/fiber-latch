@@ -7,13 +7,13 @@ import type {
   FiberVerificationResult,
 } from "./fiber-client";
 
-function isPaidPaymentReference(paymentReference: string): boolean {
-  const normalized = paymentReference.trim().toLowerCase();
+function isPaidPaymentHash(paymentHash: string): boolean {
+  const normalized = paymentHash.trim().toLowerCase();
   return normalized.startsWith("paid:") || normalized.startsWith("paid_") || normalized.endsWith(":paid");
 }
 
-function isUnpaidPaymentReference(paymentReference: string): boolean {
-  const normalized = paymentReference.trim().toLowerCase();
+function isUnpaidPaymentHash(paymentHash: string): boolean {
+  const normalized = paymentHash.trim().toLowerCase();
   return normalized.startsWith("unpaid:") || normalized.startsWith("unpaid_") || normalized.endsWith(":unpaid");
 }
 
@@ -21,68 +21,78 @@ export function createFakeFiberClient(): FiberClient {
   return {
     mode: "fake",
     async createInvoice(input: FiberInvoiceInput): Promise<FiberInvoiceResult> {
-      const invoiceReference = `fake_inv_${randomUUID()}`;
+      const invoiceAddress = `fake_inv_${randomUUID()}`;
       return {
-        invoiceReference,
-        paymentReference: invoiceReference,
+        invoiceAddress,
+        paymentHash: invoiceAddress,
         invoiceStatus: "UNPAID",
         settledAt: null,
-        transactionHash: null,
         rawStatus: "UNPAID",
         rawResponse: {
-          invoiceReference,
-          amountSats: input.amountSats,
-          memo: input.memo,
-          expirySeconds: input.expirySeconds,
-          metadata: input.metadata ?? null,
+          invoiceAddress,
+          amount: input.amount,
+          description: input.description,
+          expiry: input.expiry ?? null,
         },
       };
     },
 
     async verifyPayment(input: FiberVerificationInput): Promise<FiberVerificationResult> {
-      const paymentReference = input.paymentReference.trim();
+      const paymentHash = input.paymentHash.trim();
       const verifiedAt = new Date().toISOString();
 
-      if (!paymentReference) {
+      if (!paymentHash) {
         return {
           verified: false,
-          paymentReference,
+          paymentHash,
           verifiedAt,
-          transactionHash: null,
           invoiceStatus: "UNKNOWN",
           settledAt: null,
+          invoiceAddress: null,
+          createdAt: null,
+          lastUpdatedAt: null,
+          failedError: null,
+          fee: null,
           rawStatus: "UNKNOWN",
           rawResponse: null,
         };
       }
 
-      if (isPaidPaymentReference(paymentReference)) {
+      if (isPaidPaymentHash(paymentHash)) {
         return {
           verified: true,
-          paymentReference,
+          paymentHash,
           verifiedAt,
-          transactionHash: `fiber_tx_${randomUUID()}`,
           invoiceStatus: "PAID",
           settledAt: verifiedAt,
+          invoiceAddress: null,
+          createdAt: null,
+          lastUpdatedAt: verifiedAt,
+          failedError: null,
+          fee: null,
           rawStatus: "PAID",
           rawResponse: {
-            paymentReference,
+            payment_hash: paymentHash,
             status: "PAID",
           },
         };
       }
 
-      if (isUnpaidPaymentReference(paymentReference)) {
+      if (isUnpaidPaymentHash(paymentHash)) {
         return {
           verified: false,
-          paymentReference,
+          paymentHash,
           verifiedAt,
-          transactionHash: null,
           invoiceStatus: "UNPAID",
           settledAt: null,
+          invoiceAddress: null,
+          createdAt: null,
+          lastUpdatedAt: null,
+          failedError: null,
+          fee: null,
           rawStatus: "UNPAID",
           rawResponse: {
-            paymentReference,
+            payment_hash: paymentHash,
             status: "UNPAID",
           },
         };
@@ -90,14 +100,18 @@ export function createFakeFiberClient(): FiberClient {
 
       return {
         verified: false,
-        paymentReference,
+        paymentHash,
         verifiedAt,
-        transactionHash: null,
         invoiceStatus: "UNKNOWN",
         settledAt: null,
+        invoiceAddress: null,
+        createdAt: null,
+        lastUpdatedAt: null,
+        failedError: null,
+        fee: null,
         rawStatus: "UNKNOWN",
         rawResponse: {
-          paymentReference,
+          payment_hash: paymentHash,
           status: "UNKNOWN",
         },
       };

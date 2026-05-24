@@ -8,9 +8,20 @@ import type {
 } from "./fiber-client";
 import { mapFiberRawStatus } from "./fiber-status-mapper";
 
+const FIBER_RPC_CONTRACT_VERSION = "v0.8.1";
+const FIBER_JSON_RPC_VERSION = "2.0";
+const FIBER_RPC_METHODS = {
+  newInvoice: "new_invoice",
+  getInvoice: "get_invoice",
+  getPayment: "get_payment",
+} as const;
+const FIBER_TESTNET_CURRENCY = "Fibt";
+
+type FiberRpcParams = Record<string, unknown>;
+
 export interface FiberRpcTransportRequest {
   method: string;
-  params: Record<string, unknown>;
+  params: [FiberRpcParams];
 }
 
 export interface FiberRpcTransportResponse {
@@ -28,22 +39,18 @@ export interface RealFiberClientOptions {
   transport?: FiberRpcTransport;
 }
 
-function toMaskedReference(reference: string): string {
-  const trimmed = reference.trim();
-  if (trimmed.length <= 10) {
-    return `${trimmed.slice(0, 4)}...${trimmed.slice(-2)}`;
-  }
-
-  return `${trimmed.slice(0, 6)}...${trimmed.slice(-4)}`;
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
 }
 
 function readStringField(value: unknown, keys: string[]): string | null {
-  if (!value || typeof value !== "object") {
+  const record = readRecord(value);
+  if (!record) {
     return null;
   }
 
   for (const key of keys) {
-    const candidate = (value as Record<string, unknown>)[key];
+    const candidate = record[key];
     if (typeof candidate === "string" && candidate.trim() !== "") {
       return candidate;
     }
@@ -52,21 +59,95 @@ function readStringField(value: unknown, keys: string[]): string | null {
   return null;
 }
 
-function readNestedResponse(body: unknown): Record<string, unknown> {
-  if (!body || typeof body !== "object") {
+function readResultObject(body: unknown): Record<string, unknown> {
+  const record = readRecord(body);
+  if (!record) {
     return {};
   }
 
-  const raw = body as Record<string, unknown>;
-  const candidates = [raw.result, raw.data, raw.invoice, raw.payment, raw.response];
+  return readRecord(record.result) ?? record;
+}
 
-  for (const candidate of candidates) {
-    if (candidate && typeof candidate === "object") {
-      return candidate as Record<string, unknown>;
+function readPaymentHash(value: unknown): string | null {
+  const directPaymentHash = readStringField(value, ["payment_hash"]);
+  if (directPaymentHash) {
+    return directPaymentHash;
+  }
+
+  const invoice = readRecord(readRecord(value)?.invoice);
+  const invoiceData = readRecord(invoice?.data);
+  return readStringField(invoiceData, ["payment_hash"]);
+}
+
+function parseRpcInteger(value: unknown): bigint | null {
+  if (typeof value === "bigint") {
+    return value >= 0n ? value : null;
+  }
+
+  if (typeof value === "number") {
+    if (!Number.isInteger(value) || value < 0) {
+      return null;
+    }
+
+    return BigInt(value);
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (/^0x[0-9a-f]+$/i.test(trimmed) || /^\d+$/.test(trimmed)) {
+    try {
+      return BigInt(trimmed);
+    } catch {
+      return null;
     }
   }
 
-  return raw;
+  return null;
+}
+
+function readTimestampField(value: unknown, keys: string[]): string | null {
+  const record = readRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  for (const key of keys) {
+    const parsed = parseRpcInteger(record[key]);
+    if (parsed == null || parsed > BigInt(Number.MAX_SAFE_INTEGER)) {
+      continue;
+    }
+
+    return new Date(Number(parsed)).toISOString();
+  }
+
+  return null;
+}
+
+function readIntegerField(value: unknown, keys: string[]): string | null {
+  const record = readRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  for (const key of keys) {
+    const parsed = parseRpcInteger(record[key]);
+    if (parsed != null) {
+      return parsed.toString();
+    }
+  }
+
+  return null;
+}
+
+function toHexQuantity(value: number): string {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error("Fiber RPC numeric params must be positive integers");
+  }
+
+  return `0x${value.toString(16)}`;
 }
 
 function createJsonRpcTransport(options: RealFiberClientOptions): FiberRpcTransport {
@@ -82,13 +163,10 @@ function createJsonRpcTransport(options: RealFiberClientOptions): FiberRpcTransp
           : {}),
       },
       body: JSON.stringify({
-        jsonrpc: "2.0",
+        jsonrpc: FIBER_JSON_RPC_VERSION,
         id: randomUUID(),
         method,
-        params: {
-          network: options.network,
-          ...params,
-        },
+        params,
       }),
     });
 
@@ -103,7 +181,7 @@ function createJsonRpcTransport(options: RealFiberClientOptions): FiberRpcTransp
       throw new Error(`Fiber RPC request failed with HTTP ${response.status}`);
     }
 
-    const error = body && typeof body === "object" ? (body as Record<string, unknown>).error : null;
+    const error = readRecord(body)?.error;
     if (error && typeof error === "object") {
       const message = readStringField(error, ["message", "reason"]) ?? "Unknown Fiber RPC error";
       throw new Error(message);
@@ -128,28 +206,33 @@ function toInvoiceStatus(normalizedState: ReturnType<typeof mapFiberRawStatus>):
   return "UNPAID";
 }
 
-function buildVerificationResult(
-  paymentReference: string,
-  body: unknown,
-  verifiedAt: string,
-): FiberVerificationResult {
-  const raw = readNestedResponse(body);
-  const rawStatus = readStringField(raw, ["status", "state", "invoice_status", "payment_status"]);
+function toFiberCurrency(network: RealFiberClientOptions["network"]): string {
+  if (network === "testnet") {
+    return FIBER_TESTNET_CURRENCY;
+  }
+
+  throw new Error(`Unsupported Fiber network for RPC contract ${FIBER_RPC_CONTRACT_VERSION}: ${network}`);
+}
+
+function buildVerificationResult(paymentHash: string, body: unknown, verifiedAt: string): FiberVerificationResult {
+  const result = readResultObject(body);
+  const rawStatus = readStringField(result, ["status"]);
   const mapped = mapFiberRawStatus(rawStatus);
-  const settledAt =
-    readStringField(raw, ["settled_at", "settledAt", "paid_at", "paidAt"]) ?? (mapped.shouldIssueReceipt ? verifiedAt : null);
-  const transactionHash =
-    readStringField(raw, ["transaction_hash", "transactionHash", "tx_hash", "txHash", "hash"]) ?? null;
+  const lastUpdatedAt = readTimestampField(result, ["last_updated_at"]);
 
   return {
     verified: mapped.shouldIssueReceipt,
-    paymentReference,
+    paymentHash: readPaymentHash(result) ?? paymentHash,
     verifiedAt,
-    transactionHash,
     invoiceStatus: toInvoiceStatus(mapped),
-    settledAt,
+    settledAt: mapped.shouldIssueReceipt ? lastUpdatedAt ?? verifiedAt : null,
+    invoiceAddress: readStringField(result, ["invoice_address"]),
+    createdAt: readTimestampField(result, ["created_at"]),
+    lastUpdatedAt,
+    failedError: readStringField(result, ["failed_error"]),
+    fee: readIntegerField(result, ["fee"]),
     rawStatus,
-    rawResponse: raw,
+    rawResponse: result,
   };
 }
 
@@ -160,33 +243,43 @@ export function createRealFiberClient(options: RealFiberClientOptions): FiberCli
     mode: "real",
 
     async createInvoice(input: FiberInvoiceInput): Promise<FiberInvoiceResult> {
+      const params: FiberRpcParams = {
+        amount: toHexQuantity(input.amount),
+        currency: toFiberCurrency(options.network),
+      };
+
+      const trimmedDescription = input.description.trim();
+      if (trimmedDescription) {
+        params.description = trimmedDescription;
+      }
+
+      const expiry = input.expiry ?? options.invoiceTimeoutSeconds;
+      if (expiry > 0) {
+        params.expiry = toHexQuantity(expiry);
+      }
+
       const response = await transport({
-        method: "invoice.new_invoice",
-        params: {
-          amount_sats: input.amountSats,
-          memo: input.memo,
-          expiry_seconds: input.expirySeconds ?? options.invoiceTimeoutSeconds,
-          metadata: input.metadata ?? null,
-        },
+        method: FIBER_RPC_METHODS.newInvoice,
+        params: [params],
       });
 
-      const body = readNestedResponse(response.body);
-      const rawStatus = readStringField(body, ["status", "state", "invoice_status", "payment_status"]);
-      const mapped = mapFiberRawStatus(rawStatus);
-      const invoiceReference =
-        readStringField(body, ["invoice_reference", "invoiceReference", "invoice_id", "invoiceId"]) ??
-        readStringField(body, ["payment_reference", "paymentReference"]) ??
-        `fiber_invoice_${randomUUID()}`;
+      const result = readResultObject(response.body);
+      const invoiceAddress = readStringField(result, ["invoice_address"]);
+      const paymentHash = readPaymentHash(result);
+
+      if (!invoiceAddress || !paymentHash) {
+        throw new Error(
+          `Fiber ${FIBER_RPC_CONTRACT_VERSION} new_invoice response is missing invoice_address or payment_hash`,
+        );
+      }
 
       return {
-        invoiceReference,
-        paymentReference: readStringField(body, ["payment_reference", "paymentReference"]) ?? invoiceReference,
-        invoiceStatus: toInvoiceStatus(mapped),
-        settledAt: readStringField(body, ["settled_at", "settledAt", "paid_at", "paidAt"]),
-        transactionHash:
-          readStringField(body, ["transaction_hash", "transactionHash", "tx_hash", "txHash", "hash"]) ?? null,
-        rawStatus,
-        rawResponse: body,
+        invoiceAddress,
+        paymentHash,
+        invoiceStatus: "UNKNOWN",
+        settledAt: null,
+        rawStatus: null,
+        rawResponse: result,
       };
     },
 
@@ -194,28 +287,30 @@ export function createRealFiberClient(options: RealFiberClientOptions): FiberCli
       const verifiedAt = new Date().toISOString();
 
       const invoiceResponse = await transport({
-        method: "invoice.get_invoice",
-        params: {
-          payment_reference: input.paymentReference,
-          paymentReference: input.paymentReference,
-        },
+        method: FIBER_RPC_METHODS.getInvoice,
+        params: [
+          {
+            payment_hash: input.paymentHash,
+          },
+        ],
       });
 
-      const invoiceBody = readNestedResponse(invoiceResponse.body);
-      const invoiceStatus = readStringField(invoiceBody, ["status", "state", "invoice_status", "payment_status"]);
+      const invoiceResult = readResultObject(invoiceResponse.body);
+      const invoiceStatus = readStringField(invoiceResult, ["status"]);
       if (invoiceStatus) {
-        return buildVerificationResult(input.paymentReference, invoiceBody, verifiedAt);
+        return buildVerificationResult(input.paymentHash, invoiceResult, verifiedAt);
       }
 
       const paymentResponse = await transport({
-        method: "payment.get_payment",
-        params: {
-          payment_reference: input.paymentReference,
-          paymentReference: input.paymentReference,
-        },
+        method: FIBER_RPC_METHODS.getPayment,
+        params: [
+          {
+            payment_hash: input.paymentHash,
+          },
+        ],
       });
 
-      return buildVerificationResult(input.paymentReference, paymentResponse.body, verifiedAt);
+      return buildVerificationResult(input.paymentHash, paymentResponse.body, verifiedAt);
     },
   };
 }

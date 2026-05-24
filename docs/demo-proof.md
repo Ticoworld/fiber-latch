@@ -32,15 +32,16 @@ What is fake:
 
 What remains blocked:
 - live Fiber testnet proof
-- the exact live RPC envelope
-- live auth requirements, if any
-- a real payment reference from Fiber testnet
+- a real Fiber testnet endpoint
+- a real paid Fiber `payment_hash`
+- any endpoint-specific auth requirements, if applicable
 
 Honest claim:
 FiberLatch can prove its local receipt lifecycle end to end.
+FiberLatch also has a Fiber v0.8.1-aligned real adapter contract.
 
 Blocked claim:
 FiberLatch verifies real Fiber testnet payments.
 
 Next proof needed:
-Run `scripts/fiber-testnet-verify.ts` against a real Fiber testnet endpoint and record the sanitized result.
+Run `scripts/fiber-testnet-verify.ts` against a real Fiber testnet endpoint with a real paid `payment_hash` and record the sanitized result.

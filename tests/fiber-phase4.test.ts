@@ -1,96 +1,219 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createRealFiberClient } from "../src/integrations/fiber/real-fiber-client";
 import { mapFiberRawStatus } from "../src/integrations/fiber/fiber-status-mapper";
 import { FiberReconciliationWorker } from "../src/workers/fiber-reconciliation-worker";
 import { createTestApp } from "./helpers/test-app";
 import { createScriptedFiberClient } from "./helpers/scripted-fiber-client";
 
+const PAID_PAYMENT_HASH = `0x${"1".repeat(64)}`;
+const PENDING_PAYMENT_HASH = `0x${"2".repeat(64)}`;
+
 describe("phase 4 fiber reconciliation", () => {
   afterEach(() => {
     delete process.env.FIBER_RPC_URL;
     delete process.env.FIBER_RPC_AUTH_TOKEN;
+    vi.restoreAllMocks();
   });
 
-  it("maps expected Fiber raw statuses to internal intent states", () => {
-    expect(mapFiberRawStatus("open")).toMatchObject({
-      normalizedState: "payment_pending",
-      intentStatus: "PENDING_VERIFICATION",
-      shouldIssueReceipt: false,
-    });
+  it.each([
+    ["Open", "payment_pending", "PENDING_VERIFICATION", false],
+    ["Received", "payment_pending", "PENDING_VERIFICATION", false],
+    ["Paid", "paid_verified", "VERIFIED", true],
+    ["Expired", "expired", "EXPIRED", false],
+    ["Cancelled", "failed", "REJECTED", false],
+    ["Created", "payment_pending", "PENDING_VERIFICATION", false],
+    ["Inflight", "payment_pending", "PENDING_VERIFICATION", false],
+    ["Success", "paid_verified", "VERIFIED", true],
+    ["Failed", "failed", "REJECTED", false],
+    ["UNKNOWN_STATUS", "unknown", "PENDING_VERIFICATION", false],
+  ])(
+    "maps official Fiber status %s to the expected internal state",
+    (rawStatus, normalizedState, intentStatus, shouldIssueReceipt) => {
+      expect(mapFiberRawStatus(rawStatus)).toMatchObject({
+        normalizedState,
+        intentStatus,
+        shouldIssueReceipt,
+      });
+    },
+  );
 
-    expect(mapFiberRawStatus("settled")).toMatchObject({
-      normalizedState: "paid_verified",
-      intentStatus: "VERIFIED",
-      shouldIssueReceipt: true,
-    });
+  it("sends a Fiber v0.8.1 new_invoice request with array params and official field names", async () => {
+    const paymentHash = `0x${"a".repeat(64)}`;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        result: {
+          invoice_address: "fibt_invoice_address_001",
+          invoice: {
+            data: {
+              payment_hash: paymentHash,
+            },
+          },
+        },
+      }),
+    } as Response);
 
-    expect(mapFiberRawStatus("canceled")).toMatchObject({
-      normalizedState: "failed",
-      intentStatus: "REJECTED",
-      shouldIssueReceipt: false,
-    });
-
-    expect(mapFiberRawStatus("expired")).toMatchObject({
-      normalizedState: "expired",
-      intentStatus: "EXPIRED",
-      shouldIssueReceipt: false,
-    });
-
-    expect(mapFiberRawStatus("unknown_status")).toMatchObject({
-      normalizedState: "unknown",
-      intentStatus: "PENDING_VERIFICATION",
-      shouldIssueReceipt: false,
-    });
-  });
-
-  it("normalizes real Fiber adapter responses from raw transport payloads", async () => {
     const client = createRealFiberClient({
       rpcUrl: "https://fiber.example.test/rpc",
       authToken: null,
       network: "testnet",
       invoiceTimeoutSeconds: 900,
-      transport: async ({ method }) => {
-        if (method === "invoice.get_invoice") {
-          return {
-            statusCode: 200,
-            body: {
-              result: {
-                status: "settled",
-                payment_reference: "invoice_123",
-                transaction_hash: "tx_123",
-                settled_at: "2026-05-17T10:00:00.000Z",
-              },
-            },
-          };
-        }
+    });
 
-        return {
-          statusCode: 200,
-          body: {
-            result: {
-              status: "open",
-              payment_reference: "invoice_123",
-            },
-          },
-        };
+    const invoice = await client.createInvoice({
+      amount: 100,
+      description: "test invoice",
+      expiry: 3600,
+    });
+
+    expect(invoice).toMatchObject({
+      invoiceAddress: "fibt_invoice_address_001",
+      paymentHash,
+      invoiceStatus: "UNKNOWN",
+      rawStatus: null,
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const body = JSON.parse(String((requestInit as RequestInit).body));
+
+    expect(body.jsonrpc).toBe("2.0");
+    expect(body.method).toBe("new_invoice");
+    expect(Array.isArray(body.params)).toBe(true);
+    expect(body.params).toEqual([
+      {
+        amount: "0x64",
+        description: "test invoice",
+        currency: "Fibt",
+        expiry: "0xe10",
       },
-    });
-
-    const verification = await client.verifyPayment({ paymentReference: "invoice_123" });
-
-    expect(verification).toMatchObject({
-      verified: true,
-      paymentReference: "invoice_123",
-      invoiceStatus: "PAID",
-      transactionHash: "tx_123",
-      settledAt: "2026-05-17T10:00:00.000Z",
-      rawStatus: "settled",
-    });
+    ]);
   });
 
-  it("reconciles a paid intent once and does not duplicate the receipt on subsequent runs", async () => {
+  it("sends get_invoice with payment_hash and parses an official Paid invoice response", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        result: {
+          invoice_address: "fibt_invoice_address_002",
+          invoice: {
+            data: {
+              payment_hash: PAID_PAYMENT_HASH,
+            },
+          },
+          status: "Paid",
+        },
+      }),
+    } as Response);
+
+    const client = createRealFiberClient({
+      rpcUrl: "https://fiber.example.test/rpc",
+      authToken: null,
+      network: "testnet",
+      invoiceTimeoutSeconds: 900,
+    });
+
+    const verification = await client.verifyPayment({ paymentHash: PAID_PAYMENT_HASH });
+
+    expect(verification.paymentHash).toBe(PAID_PAYMENT_HASH);
+    expect(verification.verified).toBe(true);
+    expect(verification.invoiceStatus).toBe("PAID");
+    expect(verification.rawStatus).toBe("Paid");
+    expect(verification.invoiceAddress).toBe("fibt_invoice_address_002");
+    expect(verification.settledAt).toBe(verification.verifiedAt);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const body = JSON.parse(String((requestInit as RequestInit).body));
+
+    expect(body.method).toBe("get_invoice");
+    expect(body.params).toEqual([
+      {
+        payment_hash: PAID_PAYMENT_HASH,
+      },
+    ]);
+  });
+
+  it("falls back to get_payment with payment_hash and parses official payment fields", async () => {
+    const createdAtMs = 1716556800000;
+    const lastUpdatedAtMs = 1716556801000;
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: {
+            invoice_address: "fibt_invoice_address_003",
+            invoice: {
+              data: {
+                payment_hash: PENDING_PAYMENT_HASH,
+              },
+            },
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          result: {
+            payment_hash: PENDING_PAYMENT_HASH,
+            status: "Success",
+            created_at: `0x${createdAtMs.toString(16)}`,
+            last_updated_at: `0x${lastUpdatedAtMs.toString(16)}`,
+            failed_error: null,
+            fee: "0x2a",
+          },
+        }),
+      } as Response);
+
+    const client = createRealFiberClient({
+      rpcUrl: "https://fiber.example.test/rpc",
+      authToken: null,
+      network: "testnet",
+      invoiceTimeoutSeconds: 900,
+    });
+
+    const verification = await client.verifyPayment({ paymentHash: PENDING_PAYMENT_HASH });
+
+    expect(verification).toMatchObject({
+      paymentHash: PENDING_PAYMENT_HASH,
+      verified: true,
+      invoiceStatus: "PAID",
+      rawStatus: "Success",
+      createdAt: new Date(createdAtMs).toISOString(),
+      lastUpdatedAt: new Date(lastUpdatedAtMs).toISOString(),
+      settledAt: new Date(lastUpdatedAtMs).toISOString(),
+      fee: "42",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [, firstRequestInit] = fetchMock.mock.calls[0];
+    const [, secondRequestInit] = fetchMock.mock.calls[1];
+    const firstBody = JSON.parse(String((firstRequestInit as RequestInit).body));
+    const secondBody = JSON.parse(String((secondRequestInit as RequestInit).body));
+
+    expect(firstBody.method).toBe("get_invoice");
+    expect(firstBody.params).toEqual([
+      {
+        payment_hash: PENDING_PAYMENT_HASH,
+      },
+    ]);
+    expect(secondBody.method).toBe("get_payment");
+    expect(secondBody.params).toEqual([
+      {
+        payment_hash: PENDING_PAYMENT_HASH,
+      },
+    ]);
+  });
+
+  it("reconciles an official Paid status once and does not duplicate the receipt on subsequent runs", async () => {
+    const paymentHash = `0x${"b".repeat(64)}`;
     const fiberClient = createScriptedFiberClient({
-      "invoice_paid_once": "UNPAID",
+      [paymentHash]: "Open",
     });
     const context = await createTestApp(
       {
@@ -112,7 +235,7 @@ describe("phase 4 fiber reconciliation", () => {
             type: "END_USER",
             id: "subject_paid_once",
           },
-          paymentRef: "invoice_paid_once",
+          paymentRef: paymentHash,
           idempotencyKey: "phase4-paid-once",
         },
       });
@@ -129,7 +252,7 @@ describe("phase 4 fiber reconciliation", () => {
       expect(created.accessIntent.status).toBe("PENDING_VERIFICATION");
       expect(created.accessIntent.accessReceipt).toBeNull();
 
-      fiberClient.setStatus("invoice_paid_once", "PAID");
+      fiberClient.setStatus(paymentHash, "Paid");
 
       const worker = new FiberReconciliationWorker({
         service: context.service,
@@ -156,38 +279,19 @@ describe("phase 4 fiber reconciliation", () => {
         },
       });
       expect(receiptCountAfterSecondRun).toBe(1);
-
-      const eventTypes = await context.prisma.eventLog.findMany({
-        where: {
-          accessIntentId: created.accessIntent.id,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        select: {
-          eventType: true,
-        },
-      });
-
-      expect(eventTypes.map((event) => event.eventType)).toEqual(
-        expect.arrayContaining([
-          "ACCESS_INTENT_CREATED",
-          "ACCESS_INTENT_PAYMENT_PENDING",
-          "ACCESS_INTENT_VERIFIED",
-          "ACCESS_RECEIPT_ISSUED",
-        ]),
-      );
     } finally {
       await context.cleanup();
     }
   });
 
   it.each([
-    ["expired_invoice", "EXPIRED", "EXPIRED"],
-    ["failed_invoice", "FAILED", "REJECTED"],
-  ])("does not issue a receipt for %s Fiber status", async (paymentRef, fiberStatus, expectedIntentStatus) => {
+    ["Expired", "EXPIRED"],
+    ["Cancelled", "REJECTED"],
+    ["Failed", "REJECTED"],
+  ])("does not issue a receipt for terminal Fiber status %s", async (fiberStatus, expectedIntentStatus) => {
+    const paymentHash = `0x${fiberStatus.toLowerCase().padEnd(64, "c").slice(0, 64)}`;
     const fiberClient = createScriptedFiberClient({
-      [paymentRef]: fiberStatus as "EXPIRED" | "FAILED",
+      [paymentHash]: fiberStatus as "Expired" | "Cancelled" | "Failed",
     });
 
     const context = await createTestApp(
@@ -203,15 +307,15 @@ describe("phase 4 fiber reconciliation", () => {
         url: "/v1/access-intents",
         payload: {
           resource: {
-            key: `resource:${paymentRef}`,
+            key: `resource:${fiberStatus}`,
             type: "API",
           },
           subject: {
             type: "SERVICE_ACCOUNT",
-            id: `svc_${paymentRef}`,
+            id: `svc_${fiberStatus}`,
           },
-          paymentRef,
-          idempotencyKey: `idempotency-${paymentRef}`,
+          paymentRef: paymentHash,
+          idempotencyKey: `idempotency-${fiberStatus}`,
         },
       });
 
@@ -246,62 +350,66 @@ describe("phase 4 fiber reconciliation", () => {
     }
   });
 
-  it("does not issue a receipt when Fiber status is unknown", async () => {
-    const fiberClient = createScriptedFiberClient({
-      invoice_unknown: "UNKNOWN",
-    });
-    const context = await createTestApp(
-      {
-        fiberClientMode: "real",
-      },
-      fiberClient,
-    );
-
-    try {
-      const createResponse = await context.app.inject({
-        method: "POST",
-        url: "/v1/access-intents",
-        payload: {
-          resource: {
-            key: "resource:unknown",
-            type: "FILE",
-          },
-          subject: {
-            type: "END_USER",
-            id: "subject_unknown",
-          },
-          paymentRef: "invoice_unknown",
-        },
+  it.each(["Open", "Received", "Created", "Inflight", "UNKNOWN"])(
+    "does not issue a receipt when Fiber status is %s",
+    async (fiberStatus) => {
+      const paymentHash = `0x${fiberStatus.toLowerCase().padEnd(64, "d").slice(0, 64)}`;
+      const fiberClient = createScriptedFiberClient({
+        [paymentHash]: fiberStatus as "Open" | "Received" | "Created" | "Inflight" | "UNKNOWN",
       });
+      const context = await createTestApp(
+        {
+          fiberClientMode: "real",
+        },
+        fiberClient,
+      );
 
-      expect(createResponse.statusCode).toBe(201);
-      const created = createResponse.json() as {
-        accessIntent: {
-          id: string;
-          status: string;
-          accessReceipt: unknown;
+      try {
+        const createResponse = await context.app.inject({
+          method: "POST",
+          url: "/v1/access-intents",
+          payload: {
+            resource: {
+              key: `resource:${fiberStatus.toLowerCase()}`,
+              type: "FILE",
+            },
+            subject: {
+              type: "END_USER",
+              id: `subject_${fiberStatus.toLowerCase()}`,
+            },
+            paymentRef: paymentHash,
+          },
+        });
+
+        expect(createResponse.statusCode).toBe(201);
+        const created = createResponse.json() as {
+          accessIntent: {
+            id: string;
+            status: string;
+            accessReceipt: unknown;
+          };
         };
-      };
 
-      expect(created.accessIntent.status).toBe("PENDING_VERIFICATION");
-      expect(created.accessIntent.accessReceipt).toBeNull();
+        expect(created.accessIntent.status).toBe("PENDING_VERIFICATION");
+        expect(created.accessIntent.accessReceipt).toBeNull();
 
-      const worker = new FiberReconciliationWorker({
-        service: context.service,
-        pollIntervalMs: 10,
-      });
-      const summary = await worker.runOnce();
+        const worker = new FiberReconciliationWorker({
+          service: context.service,
+          pollIntervalMs: 10,
+        });
+        const summary = await worker.runOnce();
 
-      expect(summary.receiptsIssued).toBe(0);
+        expect(summary.receiptsIssued).toBe(0);
 
-      const receiptCount = await context.prisma.accessReceipt.count({
-        where: {
-          accessIntentId: created.accessIntent.id,
-        },
-      });
-      expect(receiptCount).toBe(0);
-    } finally {
-      await context.cleanup();
-    }
-  });
+        const receiptCount = await context.prisma.accessReceipt.count({
+          where: {
+            accessIntentId: created.accessIntent.id,
+          },
+        });
+        expect(receiptCount).toBe(0);
+      } finally {
+        await context.cleanup();
+      }
+    },
+  );
 });

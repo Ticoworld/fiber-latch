@@ -55,6 +55,20 @@ FiberLatch uses a narrow state machine for access intents and access receipts.
 - appends audit events for transitions
 - can be run repeatedly without duplicating receipts
 
+## Fiber v0.8.1 status normalization
+
+- invoice `Open` -> `PENDING_VERIFICATION`
+- invoice `Received` -> `PENDING_VERIFICATION`
+- invoice `Paid` -> `VERIFIED`
+- invoice `Expired` -> `EXPIRED`
+- invoice `Cancelled` -> `REJECTED`
+- payment `Created` -> `PENDING_VERIFICATION`
+- payment `Inflight` -> `PENDING_VERIFICATION`
+- payment `Success` -> `VERIFIED`
+- payment `Failed` -> `REJECTED`
+- unknown or ambiguous status -> `PENDING_VERIFICATION`
+- unknown or ambiguous status never issues a receipt
+
 ## Duplicate protection
 
 - `idempotencyKey` prevents duplicate intent creation

@@ -2,33 +2,35 @@ export type FiberClientMode = "fake" | "real";
 export type FiberInvoiceStatus = "PAID" | "UNPAID" | "UNKNOWN";
 
 export interface FiberInvoiceInput {
-  amountSats: number;
-  memo: string;
-  expirySeconds: number;
-  metadata?: Record<string, unknown> | undefined;
+  amount: number;
+  description: string;
+  expiry?: number | undefined;
 }
 
 export interface FiberInvoiceResult {
-  invoiceReference: string;
-  paymentReference: string;
+  invoiceAddress: string;
+  paymentHash: string;
   invoiceStatus: FiberInvoiceStatus;
   settledAt: string | null;
-  transactionHash: string | null;
   rawStatus: string | null;
   rawResponse: unknown;
 }
 
 export interface FiberVerificationInput {
-  paymentReference: string;
+  paymentHash: string;
 }
 
 export interface FiberVerificationResult {
   verified: boolean;
-  paymentReference: string;
+  paymentHash: string;
   verifiedAt: string;
-  transactionHash: string | null;
   invoiceStatus: FiberInvoiceStatus;
   settledAt: string | null;
+  invoiceAddress: string | null;
+  createdAt: string | null;
+  lastUpdatedAt: string | null;
+  failedError: string | null;
+  fee: string | null;
   rawStatus?: string | null;
   rawResponse?: unknown;
 }

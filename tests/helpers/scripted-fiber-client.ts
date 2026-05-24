@@ -7,10 +7,44 @@ import type {
   FiberVerificationResult,
 } from "../../src/integrations/fiber/fiber-client";
 
-export type ScriptedFiberStatus = "OPEN" | "UNPAID" | "PAID" | "SUCCEEDED" | "SETTLED" | "FAILED" | "EXPIRED" | "CANCELED" | "UNKNOWN";
+export type ScriptedFiberStatus =
+  | "Open"
+  | "Received"
+  | "Paid"
+  | "Cancelled"
+  | "Expired"
+  | "Created"
+  | "Inflight"
+  | "Success"
+  | "Failed"
+  | "UNKNOWN";
 
 export interface ScriptedFiberClient extends FiberClient {
-  setStatus: (paymentReference: string, status: ScriptedFiberStatus) => void;
+  setStatus: (paymentHash: string, status: ScriptedFiberStatus) => void;
+}
+
+function buildInvoiceResponse(paymentHash: string, status: ScriptedFiberStatus) {
+  return {
+    invoice_address: `fibt_${paymentHash.slice(0, 12)}_${randomUUID()}`,
+    invoice: {
+      data: {
+        payment_hash: paymentHash,
+      },
+    },
+    status,
+  };
+}
+
+function buildPaymentResponse(paymentHash: string, status: ScriptedFiberStatus, verifiedAt: string) {
+  const timestamp = Date.parse(verifiedAt);
+  return {
+    payment_hash: paymentHash,
+    status,
+    created_at: `0x${timestamp.toString(16)}`,
+    last_updated_at: `0x${timestamp.toString(16)}`,
+    failed_error: status === "Failed" ? "scripted failure" : null,
+    fee: "0x0",
+  };
 }
 
 export function createScriptedFiberClient(
@@ -21,92 +55,105 @@ export function createScriptedFiberClient(
   return {
     mode: "real",
 
-    setStatus(paymentReference: string, status: ScriptedFiberStatus) {
-      statuses.set(paymentReference, status);
+    setStatus(paymentHash: string, status: ScriptedFiberStatus) {
+      statuses.set(paymentHash, status);
     },
 
     async createInvoice(input: FiberInvoiceInput): Promise<FiberInvoiceResult> {
-      const invoiceReference = `scripted_inv_${randomUUID()}`;
-      statuses.set(invoiceReference, "UNPAID");
+      const paymentHash = `0x${randomUUID().replace(/-/g, "").padEnd(64, "0").slice(0, 64)}`;
+      const invoiceAddress = `fibt_${randomUUID()}`;
+      statuses.set(paymentHash, "Open");
+
       return {
-        invoiceReference,
-        paymentReference: invoiceReference,
-        invoiceStatus: "UNPAID",
+        invoiceAddress,
+        paymentHash,
+        invoiceStatus: "UNKNOWN",
         settledAt: null,
-        transactionHash: null,
-        rawStatus: "UNPAID",
+        rawStatus: null,
         rawResponse: {
-          invoiceReference,
-          amountSats: input.amountSats,
-          memo: input.memo,
-          expirySeconds: input.expirySeconds,
+          invoice_address: invoiceAddress,
+          invoice: {
+            amount: `0x${input.amount.toString(16)}`,
+            data: {
+              payment_hash: paymentHash,
+            },
+            description: input.description,
+          },
         },
       };
     },
 
     async verifyPayment(input: FiberVerificationInput): Promise<FiberVerificationResult> {
-      const status = statuses.get(input.paymentReference) ?? "UNKNOWN";
+      const status = statuses.get(input.paymentHash) ?? "UNKNOWN";
       const verifiedAt = new Date().toISOString();
 
       switch (status) {
-        case "PAID":
-        case "SUCCEEDED":
-        case "SETTLED":
+        case "Paid":
           return {
             verified: true,
-            paymentReference: input.paymentReference,
+            paymentHash: input.paymentHash,
             verifiedAt,
-            transactionHash: `tx_${randomUUID()}`,
             invoiceStatus: "PAID",
             settledAt: verifiedAt,
+            invoiceAddress: `fibt_${randomUUID()}`,
+            createdAt: null,
+            lastUpdatedAt: verifiedAt,
+            failedError: null,
+            fee: null,
             rawStatus: status,
-            rawResponse: {
-              paymentReference: input.paymentReference,
-              status,
-            },
+            rawResponse: buildInvoiceResponse(input.paymentHash, status),
           };
-        case "OPEN":
-        case "UNPAID":
+        case "Open":
+        case "Received":
+        case "Cancelled":
+        case "Expired":
           return {
             verified: false,
-            paymentReference: input.paymentReference,
+            paymentHash: input.paymentHash,
             verifiedAt,
-            transactionHash: null,
-            invoiceStatus: "UNPAID",
+            invoiceStatus: status === "Expired" || status === "Cancelled" ? "UNPAID" : "UNPAID",
             settledAt: null,
+            invoiceAddress: `fibt_${randomUUID()}`,
+            createdAt: null,
+            lastUpdatedAt: null,
+            failedError: null,
+            fee: null,
             rawStatus: status,
-            rawResponse: {
-              paymentReference: input.paymentReference,
-              status,
-            },
+            rawResponse: buildInvoiceResponse(input.paymentHash, status),
           };
-        case "FAILED":
-        case "EXPIRED":
-        case "CANCELED":
+        case "Created":
+        case "Inflight":
+        case "Success":
+        case "Failed":
           return {
-            verified: false,
-            paymentReference: input.paymentReference,
+            verified: status === "Success",
+            paymentHash: input.paymentHash,
             verifiedAt,
-            transactionHash: null,
-            invoiceStatus: "UNPAID",
-            settledAt: null,
+            invoiceStatus: status === "Success" ? "PAID" : "UNPAID",
+            settledAt: status === "Success" ? verifiedAt : null,
+            invoiceAddress: null,
+            createdAt: verifiedAt,
+            lastUpdatedAt: verifiedAt,
+            failedError: status === "Failed" ? "scripted failure" : null,
+            fee: "0",
             rawStatus: status,
-            rawResponse: {
-              paymentReference: input.paymentReference,
-              status,
-            },
+            rawResponse: buildPaymentResponse(input.paymentHash, status, verifiedAt),
           };
         default:
           return {
             verified: false,
-            paymentReference: input.paymentReference,
+            paymentHash: input.paymentHash,
             verifiedAt,
-            transactionHash: null,
             invoiceStatus: "UNKNOWN",
             settledAt: null,
+            invoiceAddress: null,
+            createdAt: null,
+            lastUpdatedAt: null,
+            failedError: null,
+            fee: null,
             rawStatus: "UNKNOWN",
             rawResponse: {
-              paymentReference: input.paymentReference,
+              payment_hash: input.paymentHash,
               status: "UNKNOWN",
             },
           };

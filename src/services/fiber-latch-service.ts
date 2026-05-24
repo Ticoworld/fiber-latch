@@ -200,7 +200,7 @@ export class FiberLatchService {
 
       const paymentRef = input.paymentRef?.trim() ?? null;
       const fiberVerification = paymentRef
-        ? await this.fiberClient.verifyPayment({ paymentReference: paymentRef })
+        ? await this.fiberClient.verifyPayment({ paymentHash: paymentRef })
         : null;
       const fiberMapping = mapFiberRawStatus(fiberVerification?.rawStatus ?? (fiberVerification?.verified ? "paid" : null));
       const intentExpiresAt = new Date(Date.now() + policy.receiptTtlSeconds * 1000);
@@ -225,10 +225,15 @@ export class FiberLatchService {
         receiptIssuedAt: shouldIssueImmediately ? issuedAt : null,
         expiresAt: intentExpiresAt,
         fiberResponseJson: this.safeJsonStringify({
+          paymentHash: fiberVerification?.paymentHash ?? paymentRef ?? null,
+          invoiceAddress: fiberVerification?.invoiceAddress ?? null,
           rawStatus: fiberVerification?.rawStatus ?? null,
           invoiceStatus: fiberVerification?.invoiceStatus ?? null,
-          transactionHash: fiberVerification?.transactionHash ?? null,
           settledAt: fiberVerification?.settledAt ?? null,
+          createdAt: fiberVerification?.createdAt ?? null,
+          lastUpdatedAt: fiberVerification?.lastUpdatedAt ?? null,
+          failedError: fiberVerification?.failedError ?? null,
+          fee: fiberVerification?.fee ?? null,
           rawResponse: fiberVerification?.rawResponse ?? null,
         }),
       });
@@ -747,7 +752,7 @@ export class FiberLatchService {
       }
 
       const fiberVerification = await this.fiberClient.verifyPayment({
-        paymentReference: intent.paymentRef,
+        paymentHash: intent.paymentRef,
       });
       const fiberMapping = mapFiberRawStatus(fiberVerification.rawStatus ?? (fiberVerification.verified ? "paid" : null));
 
@@ -755,10 +760,15 @@ export class FiberLatchService {
         tx,
         intent.id,
         this.safeJsonStringify({
+          paymentHash: fiberVerification.paymentHash,
+          invoiceAddress: fiberVerification.invoiceAddress,
           rawStatus: fiberVerification.rawStatus ?? null,
           invoiceStatus: fiberVerification.invoiceStatus,
-          transactionHash: fiberVerification.transactionHash,
           settledAt: fiberVerification.settledAt,
+          createdAt: fiberVerification.createdAt,
+          lastUpdatedAt: fiberVerification.lastUpdatedAt,
+          failedError: fiberVerification.failedError,
+          fee: fiberVerification.fee,
           rawResponse: fiberVerification.rawResponse ?? null,
         }),
       );

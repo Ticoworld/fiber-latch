@@ -1,7 +1,7 @@
 import { loadRuntimeConfig } from "../src/config/runtime";
 import { createFiberClient } from "../src/config/fiber-client";
 
-function maskReference(value: string | null | undefined): string | null {
+function maskValue(value: string | null | undefined): string | null {
   if (!value) {
     return null;
   }
@@ -37,8 +37,21 @@ function parsePositiveAmountSats(value: string): number {
   return parsed;
 }
 
+function readManualPaymentHash(): string | null {
+  const paymentHash = readOptionalEnv("FIBER_MANUAL_PAYMENT_HASH");
+  const legacyPaymentRef = readOptionalEnv("FIBER_MANUAL_PAYMENT_REF");
+
+  if (paymentHash && legacyPaymentRef && paymentHash !== legacyPaymentRef) {
+    throw new Error(
+      "FIBER_MANUAL_PAYMENT_HASH and FIBER_MANUAL_PAYMENT_REF were both set with different values",
+    );
+  }
+
+  return paymentHash ?? legacyPaymentRef;
+}
+
 function ensureLiveTestEnv(): {
-  paymentReference: string | null;
+  paymentHash: string | null;
   amountSats: number | null;
   memo: string | null;
 } {
@@ -54,16 +67,20 @@ function ensureLiveTestEnv(): {
 
   requireEnv("FIBER_RPC_URL");
 
-  const paymentReference = readOptionalEnv("FIBER_MANUAL_PAYMENT_REF");
+  const paymentHash = readManualPaymentHash();
   const amountSatsRaw = readOptionalEnv("FIBER_MANUAL_AMOUNT_SATS");
   const memo = readOptionalEnv("FIBER_MANUAL_MEMO");
 
-  if (paymentReference && amountSatsRaw) {
-    throw new Error("Set only one of FIBER_MANUAL_PAYMENT_REF or FIBER_MANUAL_AMOUNT_SATS");
+  if (paymentHash && amountSatsRaw) {
+    throw new Error(
+      "Set only one of FIBER_MANUAL_PAYMENT_HASH/FIBER_MANUAL_PAYMENT_REF or FIBER_MANUAL_AMOUNT_SATS",
+    );
   }
 
-  if (!paymentReference && !amountSatsRaw) {
-    throw new Error("Set either FIBER_MANUAL_PAYMENT_REF or FIBER_MANUAL_AMOUNT_SATS");
+  if (!paymentHash && !amountSatsRaw) {
+    throw new Error(
+      "Set either FIBER_MANUAL_PAYMENT_HASH (preferred), FIBER_MANUAL_PAYMENT_REF (legacy alias), or FIBER_MANUAL_AMOUNT_SATS",
+    );
   }
 
   if (amountSatsRaw && !memo) {
@@ -71,7 +88,7 @@ function ensureLiveTestEnv(): {
   }
 
   return {
-    paymentReference,
+    paymentHash,
     amountSats: amountSatsRaw ? parsePositiveAmountSats(amountSatsRaw) : null,
     memo,
   };
@@ -87,19 +104,22 @@ async function main(): Promise<void> {
 
   const client = createFiberClient(runtime);
 
-  if (liveTestEnv.paymentReference) {
-    const paymentReference = liveTestEnv.paymentReference;
-    const verification = await client.verifyPayment({ paymentReference });
+  if (liveTestEnv.paymentHash) {
+    const paymentHash = liveTestEnv.paymentHash;
+    const verification = await client.verifyPayment({ paymentHash });
     console.log(
       JSON.stringify(
         {
           operation: "verify",
-          paymentReference: maskReference(paymentReference),
+          paymentHash: maskValue(paymentHash),
           verified: verification.verified,
           invoiceStatus: verification.invoiceStatus,
           rawStatus: verification.rawStatus ?? null,
-          transactionHash: maskReference(verification.transactionHash),
+          invoiceAddress: maskValue(verification.invoiceAddress),
           settledAt: verification.settledAt,
+          lastUpdatedAt: verification.lastUpdatedAt,
+          failedError: verification.failedError,
+          fee: verification.fee,
         },
         null,
         2,
@@ -114,23 +134,19 @@ async function main(): Promise<void> {
     }
 
     const invoice = await client.createInvoice({
-      amountSats: liveTestEnv.amountSats,
-      memo: liveTestEnv.memo ?? "FiberLatch manual testnet invoice",
-      expirySeconds: runtime.fiberInvoiceTimeoutSeconds,
-      metadata: {
-        source: "fiber-testnet-verify",
-      },
+      amount: liveTestEnv.amountSats,
+      description: liveTestEnv.memo ?? "FiberLatch manual testnet invoice",
+      expiry: runtime.fiberInvoiceTimeoutSeconds,
     });
 
     console.log(
       JSON.stringify(
         {
           operation: "create-invoice",
-          invoiceReference: maskReference(invoice.invoiceReference),
-          paymentReference: maskReference(invoice.paymentReference),
+          invoiceAddress: maskValue(invoice.invoiceAddress),
+          paymentHash: maskValue(invoice.paymentHash),
           invoiceStatus: invoice.invoiceStatus,
           rawStatus: invoice.rawStatus,
-          transactionHash: maskReference(invoice.transactionHash),
           settledAt: invoice.settledAt,
         },
         null,
@@ -140,7 +156,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  throw new Error("Set either FIBER_MANUAL_PAYMENT_REF or FIBER_MANUAL_AMOUNT_SATS to run the manual Fiber testnet script");
+  throw new Error(
+    "Set either FIBER_MANUAL_PAYMENT_HASH/FIBER_MANUAL_PAYMENT_REF or FIBER_MANUAL_AMOUNT_SATS to run the manual Fiber testnet script",
+  );
 }
 
 main().catch((error: unknown) => {

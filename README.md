@@ -4,6 +4,7 @@ FiberLatch is a backend-only service that turns a payment verification signal in
 
 Current proof status:
 - Local access receipt lifecycle is proven end to end.
+- Real Fiber adapter behavior is aligned to official Fiber v0.8.1 RPC shape.
 - Live Fiber testnet verification is not proven yet.
 
 Start here:
@@ -49,4 +50,5 @@ Live Fiber blocker:
 
 Proof note:
 - The local demo proves the receipt lifecycle using the fake Fiber adapter.
+- The real Fiber adapter is aligned to Fiber v0.8.1 request and status shapes.
 - It does not prove live Fiber testnet verification.

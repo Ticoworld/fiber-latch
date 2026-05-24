@@ -34,7 +34,9 @@ Minimum local settings:
 
 If you want to review the live-test path later, also set:
 - `FIBER_RPC_URL`
-- `FIBER_RPC_AUTH_TOKEN` if your Fiber endpoint requires it
+- `FIBER_RPC_AUTH_TOKEN` if your Fiber endpoint or proxy requires it
+- `FIBER_MANUAL_PAYMENT_HASH` for live verification by Fiber `payment_hash`
+- `FIBER_MANUAL_PAYMENT_REF` only as a legacy alias for the same `payment_hash`
 
 ## Test
 
@@ -64,7 +66,8 @@ Expected demo summary:
 
 ## Live Fiber Blocker
 
-Live Fiber testnet verification is still blocked until a real endpoint and live payment reference are available.
+Live Fiber testnet verification is still blocked until a real endpoint and a real paid Fiber `payment_hash` are available.
+The real adapter is aligned to official Fiber v0.8.1 RPC shape, but that is not live proof.
 
 See:
 - [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)

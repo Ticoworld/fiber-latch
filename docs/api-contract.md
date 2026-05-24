@@ -35,6 +35,7 @@ Behavior:
 - If `idempotencyKey` already exists, the existing intent is returned.
 - In fake mode, a paid fake payment can immediately yield a receipt.
 - In real mode, receipt issuance is deferred to reconciliation.
+- In real Fiber mode, `paymentRef` should contain the Fiber `payment_hash` to verify.
 
 ## `GET /v1/access-intents/:id`
 
