@@ -12,6 +12,7 @@ What this repo proves locally:
 
 What this repo does not prove yet:
 - live Fiber testnet verification
+- receipt issuance from a live paid Fiber payment
 
 ## Install
 
@@ -66,8 +67,16 @@ Expected demo summary:
 
 ## Live Fiber Blocker
 
-Live Fiber testnet verification is still blocked until a real endpoint and a real paid Fiber `payment_hash` are available.
-The real adapter is aligned to official Fiber v0.8.1 RPC shape, but that is not live proof.
+Live Fiber testnet verification is still blocked until a real public-node payment reaches `Paid`.
+Public Fiber testnet RPC contact is proven, and the real adapter is aligned to official Fiber v0.8.1 RPC shape, but that is not paid proof.
+
+Current payment blocker:
+- local `fnn` v0.8.1 runs with a funded testnet account
+- the local channel to public node1 reached `ChannelReady`
+- public node2 invoice creation and `get_invoice(payment_hash)` work
+- automatic `send_payment` failed with `PathFind error: no path found`
+- `send_payment` with `trampoline_hops` through node1 failed with `max outbound liquidity 0`
+- node2 invoices remained `Open`
 
 See:
 - [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)

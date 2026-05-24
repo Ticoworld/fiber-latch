@@ -5,7 +5,11 @@ FiberLatch is a backend-only service that turns a payment verification signal in
 Current proof status:
 - Local access receipt lifecycle is proven end to end.
 - Real Fiber adapter behavior is aligned to official Fiber v0.8.1 RPC shape.
+- Public Fiber testnet RPC contact, invoice creation, and `get_invoice(payment_hash)` are proven.
+- Local `fnn` v0.8.1 runs with a funded testnet account and a `ChannelReady` channel to public node1.
+- A real public-node payment attempt was made; automatic routing failed with `no path found`, and trampoline routing through node1 failed with `max outbound liquidity 0`.
 - Live Fiber testnet verification is not proven yet.
+- Receipt issuance from a live paid Fiber payment is not proven yet.
 
 Start here:
 - [`QUICKSTART.md`](QUICKSTART.md)
@@ -51,4 +55,5 @@ Live Fiber blocker:
 Proof note:
 - The local demo proves the receipt lifecycle using the fake Fiber adapter.
 - The real Fiber adapter is aligned to Fiber v0.8.1 request and status shapes.
-- It does not prove live Fiber testnet verification.
+- Public-node invoice creation does not prove settlement.
+- It does not prove live paid Fiber testnet verification.

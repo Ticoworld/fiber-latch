@@ -1,6 +1,8 @@
 node_modules
 .env
 .env.local
+.env.*
+!.env.example
 dist
 coverage
 .DS_Store
@@ -9,4 +11,19 @@ dev.db
 dev.db-journal
 *.sqlite
 *.sqlite3
+*.log
 .tmp-fiberlatch-*
+
+# Local Fiber/CKB toolchain and runtime artifacts must stay outside the repo.
+fiber-local-node/
+fiber-local-toolchain/
+**/fiber-local-node/
+**/fiber-local-toolchain/
+**/nodeA/
+exported-key
+**/exported-key
+ckb/key
+**/ckb/key
+*.pem
+*.key
+*.sqlite-journal

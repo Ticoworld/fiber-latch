@@ -202,6 +202,8 @@ The remaining blocker is a real paid Fiber testnet `payment_hash` from a payment
 
 Official docs indicate actual payment requires a payer node/wallet path with channel setup, `ChannelReady`/`CHANNEL_READY`, route availability, and sufficient liquidity. This workspace has not established or funded a local Fiber payer node/channel, so paid verification must stop here.
 
+Later Phase 2G update: the workspace later did establish a local funded testnet account, start local `fnn` v0.8.1, and reach `ChannelReady` with public node1. Payment still did not settle. Automatic routing failed with `PathFind error: no path found`, and trampoline routing through node1 failed with `Insufficient balance: max outbound liquidity 0 is insufficient, required amount: 100000000`. Node2 invoices remained `Open`, so live paid verification remains unproven.
+
 ## Safe Week 10 Wording
 
 FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligned adapter. In Phase 2D, it reached official public Fiber testnet nodes, created unpaid public-node invoices, queried them by `payment_hash`, and correctly refused receipt issuance while the invoice status was `Open`.

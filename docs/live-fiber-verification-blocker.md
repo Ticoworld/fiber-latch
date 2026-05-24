@@ -60,14 +60,21 @@ Phase 2G update:
 - `send_payment` failed with `PathFind error: no path found`
 - `get_payment` returned `Failed`
 - `get_invoice` remained `Open`
+- local graph diagnostics confirmed the local node knows node1, node2, the local CKB channel to node1, and CKB graph channels between node1 and node2
+- public node1 still reports 89 ready CKB channels to node2 with at least 1 CKB outbound liquidity from node1
+- `send_payment` dry-run without a route hint failed with `PathFind error: no path found`
+- `send_payment` dry-run with `trampoline_hops` set to public node1 produced one route-shaped `Created` result and fee estimate `0x7a120`
+- real `send_payment` with `trampoline_hops` set to public node1 failed with `Insufficient balance: max outbound liquidity 0 is insufficient, required amount: 100000000`
+- a strict invoice-shape retry using `final_cltv: "0x28"` failed at dry-run with the same `max outbound liquidity 0` error, so no second real payment was attempted
+- node2 invoices from the trampoline attempts remained `Open`
 
-The blocker is no longer "no public endpoint can be reached," "missing local binaries," or "no local account." The exact remaining blocker is routing/path discovery from the local node to node2 through node1, even though the local node channel is `ChannelReady` and node1 already shows ready channels to node2. Only after the local node can build a route and pay a public node2 invoice can FiberLatch verify a paid `payment_hash` and issue a receipt from the paid result.
+The blocker is no longer "no public endpoint can be reached," "missing local binaries," "no local account," "no local channel," or only "no path found." The exact remaining blocker is Fiber route/liquidity construction from the local node to node2 through node1. Automatic routing reports no path; trampoline routing gets further but real send fails because the route builder reports `max outbound liquidity 0` despite the local channel being `ChannelReady` and public node1 reporting ready CKB channels to node2. Only after the local node can execute a payment and node2 returns `Paid` can FiberLatch verify a paid `payment_hash` and issue a receipt from the paid result.
 
 Current honest claim:
-FiberLatch has a Fiber v0.8.1-aligned verification adapter, a complete signed receipt lifecycle, public-node proof that unpaid Fiber testnet invoices can be created and queried without issuing receipts, local Windows-native Fiber/CKB CLI tooling prepared outside the repo, a manually created local CKB testnet account with faucet claim success observed, and a live local node with a ready channel to public node1. Paid verification remains blocked on route discovery/path finding to node2.
+FiberLatch has a Fiber v0.8.1-aligned verification adapter, a complete signed receipt lifecycle, public-node proof that unpaid Fiber testnet invoices can be created and queried without issuing receipts, local Windows-native Fiber/CKB CLI tooling prepared outside the repo, a manually created local CKB testnet account with faucet claim success observed, a live local node with a ready channel to public node1, and a real public-node payment attempt with explicit trampoline routing. Paid verification remains blocked on Fiber route/liquidity construction to node2.
 
 Current dishonest claim:
 FiberLatch verifies real Fiber testnet payments.
 
 Next proof needed:
-Verify route discovery/path finding from the local node to node2 through node1, make a real Fiber testnet payment, run FiberLatch verification against the resulting paid `payment_hash`, and record the sanitized receipt-issuance result.
+Resolve the trampoline route/liquidity failure, make a real Fiber testnet payment that turns node2 `get_invoice(payment_hash)` to `Paid`, run FiberLatch verification against the resulting paid `payment_hash`, and record the sanitized receipt-issuance result.

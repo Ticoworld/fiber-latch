@@ -222,17 +222,117 @@ Route retry result:
 
 The blocker after the retry is routing/gossip/path discovery from the local node to node2 through node1.
 
+## Phase 2G Trampoline Payment Attempt
+
+Date: 2026-05-24
+
+After the automatic route retry failed with `PathFind error: no path found`, `fnn-cli payment send_payment --help` was inspected and showed an explicit `trampoline_hops` option:
+
+- `trampoline_hops`: optional explicit trampoline hops
+- when set to `[t1, t2, ...]`, routing finds a path from payer to `t1`, then encodes the inner trampoline onion from `t1` through the remaining hops to final
+
+Local graph diagnostics showed:
+
+```json
+{
+  "localGraphMentionsNode1": true,
+  "localGraphMentionsNode2": true,
+  "localToNode1CkbChannels": 1,
+  "node1ToNode2CkbChannels": 4,
+  "node1ToNode2DirectionalUpdatesInLocalGraph": 0
+}
+```
+
+Public node1 liquidity diagnostics showed:
+
+```json
+{
+  "publicNode1ToNode2TotalChannels": 107,
+  "publicNode1ToNode2ReadyCkbChannels": 89,
+  "readyCkbWithNode1OutboundAtLeast1Ckb": 89
+}
+```
+
+A dry-run probe using `trampoline_hops` with node1 produced a route-shaped result:
+
+```json
+{
+  "invoiceCreated": true,
+  "invoiceMasked": "fibt100000...gp0m4agw",
+  "paymentHashMasked": "0xcb6ad392...24746ca7",
+  "dryRunWithoutHint": {
+    "error": "Send payment error: Failed to build route, PathFind error: no path found"
+  },
+  "dryRunWithTrampolineNode1": {
+    "status": "Created",
+    "fee": "0x7a120"
+  },
+  "paidAttempted": false,
+  "preimagePrinted": false
+}
+```
+
+The real payment attempt then used a fresh node2 invoice and `trampoline_hops` with node1:
+
+```json
+{
+  "invoiceCreated": true,
+  "invoiceMasked": "fibt100000...qpvx8rc0",
+  "paymentHashMasked": "0x54ddf549...9391d6c5",
+  "sendPayment": {
+    "error": "Send payment error: Failed to build route, Insufficient balance: max outbound liquidity 0 is insufficient, required amount: 100000000"
+  },
+  "finalPayment": {
+    "status": "Failed",
+    "fee": "0x0"
+  },
+  "finalInvoice": {
+    "status": "Open"
+  },
+  "paidReached": false,
+  "preimagePrinted": false
+}
+```
+
+A final strict invoice-shape check added the official example's `final_cltv: "0x28"` field. That dry-run failed before any real send:
+
+```json
+{
+  "invoiceCreated": true,
+  "invoiceMasked": "fibt100000...qpxa5yaj",
+  "paymentHashMasked": "0x7cfc7f01...b931d641",
+  "invoiceUsedFinalCltv": true,
+  "dryRun": {
+    "error": "Send payment error: Failed to build route, Insufficient balance: max outbound liquidity 0 is insufficient, required amount: 100000000"
+  },
+  "realSendAttempted": false,
+  "paidReached": false,
+  "preimagePrinted": false
+}
+```
+
+Trampoline attempt result:
+
+- automatic `send_payment` still fails with `PathFind error: no path found`
+- `trampoline_hops` can change the failure mode and produced one route-shaped dry-run result
+- real `send_payment` with `trampoline_hops` failed before settlement with `max outbound liquidity 0`
+- node2 `get_invoice` remained `Open`
+- FiberLatch live paid verification was not run because no invoice reached `Paid`
+
 ## Exact Blocker
 
-Primary blocker: routing/path discovery from the local node to node2 through node1.
+Primary blocker: Fiber routing/liquidity path construction from the local node to node2 through node1.
 
 Specific blockers:
 
 - `send_payment` was attempted and failed with `PathFind error: no path found`
+- `send_payment` with `trampoline_hops` was attempted and failed with `Insufficient balance: max outbound liquidity 0 is insufficient, required amount: 100000000`
 - invoice remained `Open`
-- route/gossip/path discovery from the local node to node2 through node1 is still missing
+- local channel state still shows `ChannelReady`, enabled, CKB channel, local balance, and no pending TLCs
+- public node1 still reports ready CKB channels to node2 with at least 1 CKB local outbound liquidity
+- the remaining issue is now Fiber's path construction/liquidity accounting for the trampoline route, not FiberLatch code
 
-Faucet pages were reachable, but no funding action was possible or attempted because there was no local address to fund.
+Earlier Phase 2E stopped before funding because no local address existed yet. Later Phase 2G created and funded a local testnet account and reached `ChannelReady`; the current blocker is the route/liquidity failure above.
 
 ## What Is Now Proven
 
@@ -241,20 +341,20 @@ Faucet pages were reachable, but no funding action was possible or attempted bec
 - Public node2 still returns a `payment_hash`.
 - Public node2 still returns `Open` for an unpaid invoice.
 - Public node1 can report channel information for node2 when queried with `pubkey`; ready public channels were observed between the public nodes.
-- This workspace has a live local node and ready local channel, but the payer path still cannot reach node2 because route discovery fails.
+- This workspace has a live local node and ready local channel, but the payer path still cannot pay node2 because automatic routing fails and the trampoline route fails real send with `max outbound liquidity 0`.
 
 ## What Is Still Not Proven
 
 - A local Fiber payer node can complete a paid payment from this workspace.
 - A local CKB address can be used by Fiber to complete a paid payment here.
-- A public-node route from the local node to node2 can be built reliably.
+- A public-node route from the local node to node2 can be built and executed reliably.
 - A public node2 invoice can be paid from this workspace.
 - FiberLatch can verify a real paid Fiber `payment_hash`.
 - FiberLatch can issue and redeem a receipt driven by a real paid Fiber payment.
 
 ## Safe Week 10 Wording
 
-FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligned adapter. Phase 2E confirmed the official public-node payer path requirements, Phase 2F installed and verified official local tooling, Phase 2G created the local account and established a `ChannelReady` local channel, and the route retry still failed because the local node could not build a path to node2.
+FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligned adapter. Phase 2E confirmed the official public-node payer path requirements, Phase 2F installed and verified official local tooling, Phase 2G created the local account, established a `ChannelReady` local channel, and proved the next blocker is Fiber route/liquidity construction: automatic routing reports no path and trampoline routing reports `max outbound liquidity 0`.
 
 ## Claims Still Forbidden
 
@@ -264,6 +364,7 @@ FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligne
 - FiberLatch can run the payer path from this workspace today.
 - Public-node invoice creation proves settlement.
 - Local channel readiness guarantees route discovery.
+- A trampoline dry-run result proves settlement.
 
 ## Commands Run
 
@@ -291,3 +392,12 @@ FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligne
 - `npm run demo:local-access`
 - `Start-Sleep -Seconds 180`
 - combined Node route retry script covering node1-to-node2 `list_channels`, exact guide-shaped public `new_invoice`, local `send_payment`, local `get_payment`, and node2 `get_invoice`
+- `fnn-cli graph graph_nodes --limit 1000 --raw-data --output-format json`
+- `fnn-cli graph graph_channels --limit 5000 --raw-data --output-format json`
+- `fnn-cli payment send_payment --help`
+- JSON-RPC `send_payment` dry-run without `trampoline_hops`
+- JSON-RPC `send_payment` dry-run with `trampoline_hops` set to public node1
+- JSON-RPC real `send_payment` with `trampoline_hops` set to public node1
+- JSON-RPC `get_payment(payment_hash)` for the trampoline attempt
+- JSON-RPC `get_invoice(payment_hash)` on public node2 for the trampoline attempt
+- JSON-RPC `new_invoice` with `final_cltv: "0x28"` for strict official invoice-shape check

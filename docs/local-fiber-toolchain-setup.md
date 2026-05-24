@@ -215,6 +215,6 @@ Create a local CKB testnet account in a controlled secret-safe shell session, ca
 
 `ckb-cli account new` was not run by Codex because local help says it will create a new account and "print related information" but does not explicitly guarantee secret-free output. The safe next step is a human-run account creation in a local terminal, sharing back only public `lock_arg`, `lock_hash`, and testnet address.
 
-Human account creation later succeeded and only public account fields were shared. The public testnet address is documented in masked form only. A faucet claim success was observed, and the exported key file was later written into the external nodeA runtime, but route discovery to node2 is still not solved.
+Human account creation later succeeded and only public account fields were shared. The public testnet address is documented in masked form only. A faucet claim success was observed, the exported key file was later written into the external nodeA runtime, local `fnn` started, and the local channel to public node1 reached `ChannelReady`. Payment still did not settle: automatic routing failed with `PathFind error: no path found`, and trampoline routing through public node1 failed with `max outbound liquidity 0`.
 
 See `docs/local-fiber-account-funding.md` for the manual secret-safe instruction and funding prep.
