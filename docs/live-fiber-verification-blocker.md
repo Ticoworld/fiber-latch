@@ -43,13 +43,30 @@ Phase 2F update:
 - `ckb-cli --local-only account list` returned no existing local accounts
 - no private key was printed, exported, copied, or committed
 
-The blocker is no longer "no public endpoint can be reached" or "missing local binaries." The exact remaining blocker is paid verification through a funded local payer: a local CKB testnet address/key must be created without exposing secrets, funded, exported into the external Fiber node directory, used to start `fnn`, connected to public node1, brought to `CHANNEL_READY`, and used to pay a public node2 invoice. Only after that can FiberLatch verify a paid `payment_hash` and issue a receipt from the paid result.
+Phase 2G update:
+- external Fiber toolchain and runtime directories still exist outside the repo
+- `fnn`, `fnn-cli`, `fnn-migrate`, and `ckb-cli` still run by full path
+- `ckb-cli account new` was inspected but not run because help text does not explicitly guarantee secret-free output
+- local CKB account creation was completed manually by the human
+- public testnet address, `lock_arg`, and `lock_hash` were shared and documented only in masked form
+- faucet page displayed `Claim Success` for `100000.0` CKB to the masked testnet address
+- CLI/on-chain spendable balance has not yet been verified
+- no private key, seed phrase, mnemonic, password, keystore, or node runtime secret was printed or committed
+- manual account creation and funding instructions are documented in `docs/local-fiber-account-funding.md`
+- the local node is running and has a `ChannelReady` channel to public node1
+- public node1 reports multiple `ChannelReady` channels to public node2
+- a fresh public node2 invoice still could not be paid from the local node
+- `send_payment` failed with `PathFind error: no path found`
+- `get_payment` returned `Failed`
+- `get_invoice` remained `Open`
+
+The blocker is no longer "no public endpoint can be reached," "missing local binaries," or "no local account." The exact remaining blocker is routing/path discovery from the local node to node2 through node1, even though the local node channel is `ChannelReady` and node1 already shows ready channels to node2. Only after the local node can build a route and pay a public node2 invoice can FiberLatch verify a paid `payment_hash` and issue a receipt from the paid result.
 
 Current honest claim:
-FiberLatch has a Fiber v0.8.1-aligned verification adapter, a complete signed receipt lifecycle, public-node proof that unpaid Fiber testnet invoices can be created and queried without issuing receipts, and local Windows-native Fiber/CKB CLI tooling prepared outside the repo. Paid verification remains blocked on local account creation, funding, node startup, channel readiness, and payment execution.
+FiberLatch has a Fiber v0.8.1-aligned verification adapter, a complete signed receipt lifecycle, public-node proof that unpaid Fiber testnet invoices can be created and queried without issuing receipts, local Windows-native Fiber/CKB CLI tooling prepared outside the repo, a manually created local CKB testnet account with faucet claim success observed, and a live local node with a ready channel to public node1. Paid verification remains blocked on route discovery/path finding to node2.
 
 Current dishonest claim:
 FiberLatch verifies real Fiber testnet payments.
 
 Next proof needed:
-Create a secret-safe local CKB testnet account, capture only masked public address/lock_arg, export the key into the external Fiber node directory without printing it, fund the address, start `fnn`, connect to public node1, open a channel, wait for `CHANNEL_READY`, confirm route availability, make a real Fiber testnet payment, run FiberLatch verification against the resulting paid `payment_hash`, and record the sanitized receipt-issuance result.
+Verify route discovery/path finding from the local node to node2 through node1, make a real Fiber testnet payment, run FiberLatch verification against the resulting paid `payment_hash`, and record the sanitized receipt-issuance result.

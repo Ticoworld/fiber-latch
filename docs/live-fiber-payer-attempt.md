@@ -150,22 +150,79 @@ No FiberLatch live paid verification was run because the invoice never became `P
 - `docs/live-fiber-payer-attempt.md`
 - `docs/live-fiber-verification-blocker.md`
 
+## Phase 2G Route Retry Attempt
+
+Date: 2026-05-24
+
+Waited 3 minutes after the local channel reached `ChannelReady`, then retried with the live local node and the documented public nodes.
+
+Sanitized retry output:
+
+```json
+{
+  "localNode": {
+    "channelCount": "0x1",
+    "readyChannelsToNode1": [
+      {
+        "channelId": "0x761d692d...3753cd56",
+        "stateName": "ChannelReady",
+        "fundingUdtTypeScript": null,
+        "localBalance": "0x956257100",
+        "remoteBalance": "0x38407b700",
+        "isPublic": true,
+        "enabled": true
+      }
+    ]
+  },
+  "node1ToNode2": {
+    "readyChannelsToNode2": [
+      {
+        "channelId": "0x922e22e8...97e31aa2",
+        "stateName": "ChannelReady",
+        "fundingUdtTypeScript": null,
+        "localBalance": "0x38407b700",
+        "remoteBalance": "0x956257100",
+        "isPublic": true,
+        "enabled": true
+      }
+    ]
+  },
+  "invoiceCreate": {
+    "invoiceAddress": "fibt11pmcs...qqcq9rp9",
+    "paymentHash": "0x2382c53c...65e36d06"
+  },
+  "sendPayment": {
+    "hasError": true,
+    "errorMessage": "Send payment error: Failed to build route, PathFind error: no path found"
+  },
+  "getPayment": {
+    "status": "Failed"
+  },
+  "getInvoice": {
+    "status": "Open"
+  }
+}
+```
+
+Route retry result:
+
+- local channel to node1: `ChannelReady`
+- node1 to node2 ready channels: yes
+- `send_payment`: failed
+- `get_payment`: `Failed`
+- `get_invoice`: `Open`
+
+The blocker after the retry is routing/gossip/path discovery from the local node to node2 through node1.
+
 ## Exact Blocker
 
-Primary blocker: missing local payer setup.
+Primary blocker: routing/path discovery from the local node to node2 through node1.
 
 Specific blockers:
 
-- missing `fnn`/`fnn-cli` binary
-- missing `ckb-cli`
-- no local CKB key/address discovered
-- no local Fiber node data directory
-- no funded local payer address
-- balance cannot be checked because no local address exists
-- channel cannot be opened because local node cannot start and has no funded key
-- `CHANNEL_READY` cannot be reached without opening a channel
-- `send_payment` cannot be attempted without local node, funding, channel readiness, and route availability
+- `send_payment` was attempted and failed with `PathFind error: no path found`
 - invoice remained `Open`
+- route/gossip/path discovery from the local node to node2 through node1 is still missing
 
 Faucet pages were reachable, but no funding action was possible or attempted because there was no local address to fund.
 
@@ -176,21 +233,20 @@ Faucet pages were reachable, but no funding action was possible or attempted bec
 - Public node2 still returns a `payment_hash`.
 - Public node2 still returns `Open` for an unpaid invoice.
 - Public node1 can report channel information for node2 when queried with `pubkey`; ready public channels were observed between the public nodes.
-- This workspace currently cannot execute the local payer path without additional tooling and funding setup.
+- This workspace has a live local node and ready local channel, but the payer path still cannot reach node2 because route discovery fails.
 
 ## What Is Still Not Proven
 
-- A local Fiber payer node can run from this workspace.
-- A local CKB address can be created, exported, funded, and used by Fiber here.
-- A channel can be opened from a local node to public node1.
-- `CHANNEL_READY` can be reached from a local node.
+- A local Fiber payer node can complete a paid payment from this workspace.
+- A local CKB address can be used by Fiber to complete a paid payment here.
+- A public-node route from the local node to node2 can be built reliably.
 - A public node2 invoice can be paid from this workspace.
 - FiberLatch can verify a real paid Fiber `payment_hash`.
 - FiberLatch can issue and redeem a receipt driven by a real paid Fiber payment.
 
 ## Safe Week 10 Wording
 
-FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligned adapter. Phase 2E confirmed the official public-node payer path requirements, re-verified public node reachability, created and queried another unpaid public-node invoice, and stopped before payer execution because the workspace lacks local Fiber/CKB tooling, a funded local address, and channel readiness.
+FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligned adapter. Phase 2E confirmed the official public-node payer path requirements, Phase 2F installed and verified official local tooling, Phase 2G created the local account and established a `ChannelReady` local channel, and the route retry still failed because the local node could not build a path to node2.
 
 ## Claims Still Forbidden
 
@@ -199,6 +255,7 @@ FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligne
 - FiberLatch issued a receipt from a live paid Fiber payment.
 - FiberLatch can run the payer path from this workspace today.
 - Public-node invoice creation proves settlement.
+- Local channel readiness guarantees route discovery.
 
 ## Commands Run
 
@@ -224,3 +281,5 @@ FiberLatch has a backend-only signed receipt lifecycle and a Fiber v0.8.1-aligne
 - `npm test`
 - `npm run build`
 - `npm run demo:local-access`
+- `Start-Sleep -Seconds 180`
+- combined Node route retry script covering local `node_info`, `list_channels`, public `new_invoice`, local `send_payment`, local `get_payment`, and node2 `get_invoice`
