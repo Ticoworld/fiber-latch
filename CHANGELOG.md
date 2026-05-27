@@ -4,13 +4,16 @@ All entries describe what was proven or changed in each phase. Proof boundaries 
 
 ---
 
-## [Unreleased]
+## Phase 3 — 2026-05-27
 
-### Current blocker
+### Live Paid Fiber Verification Proven
 
-Fiber route and liquidity construction from the local node to public node2 through public node1. Automatic routing fails with `PathFind error: no path found`. Trampoline routing gets further but fails with `Insufficient balance: max outbound liquidity 0 is insufficient, required amount: 100000000`. Node2 invoices remain `Open`. This is a Fiber routing and liquidity problem, not a FiberLatch application logic problem.
-
-Next required proof: resolve the trampoline route/liquidity failure, execute a real Fiber testnet payment, confirm node2 `get_invoice(payment_hash)` returns `Paid`, then run FiberLatch verification against the resulting paid `payment_hash` and record the sanitized receipt-issuance result.
+- Local `fnn` node successfully started and synchronized routing graph.
+- A real Fiber testnet payment of a tiny amount (1,000 shannons) was successfully executed via trampoline route through public node1 to a public node2 invoice.
+- The node2 invoice successfully transitioned to `Paid`.
+- The FiberLatch verification script (`npm run fiber:testnet:verify`) successfully queried the real paid `payment_hash`.
+- The `demo-live-paid-issuance.ts` script successfully proved the complete service-layer path: it ingested the live paid `payment_hash`, created an `AccessIntent`, ran the reconciliation worker, issued a signed JWT `AccessReceipt`, verified the JWT, and atomically redeemed it.
+- **Note:** This payment was a tiny testnet amount. This proves the integration lifecycle but does not declare production or mainnet readiness.
 
 ---
 

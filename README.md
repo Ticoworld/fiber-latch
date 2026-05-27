@@ -7,9 +7,8 @@ Current proof status:
 - Real Fiber adapter behavior is aligned to official Fiber v0.8.1 RPC shape.
 - Public Fiber testnet RPC contact, invoice creation, and `get_invoice(payment_hash)` are proven.
 - Local `fnn` v0.8.1 runs with a funded testnet account and a `ChannelReady` channel to public node1.
-- A real public-node payment attempt was made; automatic routing failed with `no path found`, and trampoline routing through node1 failed with `max outbound liquidity 0`.
-- Live Fiber testnet verification is not proven yet.
-- Receipt issuance from a live paid Fiber payment is not proven yet.
+- FiberLatch has proven a full testnet flow: a live paid Fiber payment_hash was verified through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
+- This is still testnet-only and not production or mainnet readiness.
 
 Start here:
 - [`QUICKSTART.md`](QUICKSTART.md)
@@ -53,7 +52,5 @@ Live Fiber blocker:
 - [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
 
 Proof note:
-- The local demo proves the receipt lifecycle using the fake Fiber adapter.
-- The real Fiber adapter is aligned to Fiber v0.8.1 request and status shapes.
-- Public-node invoice creation does not prove settlement.
-- It does not prove live paid Fiber testnet verification.
+- FiberLatch has proven a full testnet flow: a live paid Fiber payment_hash was verified through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
+- This is still testnet-only and not production or mainnet readiness.
