@@ -10,9 +10,13 @@ What this repo proves locally:
 - fake Fiber-driven reconciliation
 - local end-to-end demo flow
 
-What this repo does not prove yet:
-- live Fiber testnet verification
-- receipt issuance from a live paid Fiber payment
+What this repo proves from a live Fiber testnet payment:
+- live paid Fiber payment_hash verified through Fiber v0.8.1 RPC
+- signed access receipt issued from a live paid signal
+- receipt verified, redeemed once, and rejected on second redemption
+- tagged at `fiberlatch-live-paid-proof`
+
+This is testnet-only proof. Production and mainnet readiness are not proven.
 
 ## Install
 
@@ -65,19 +69,22 @@ Expected demo summary:
 - second redemption is denied
 - the stored receipt becomes exhausted after the first redemption
 
-## Live Fiber Blocker
+## Live Fiber Proof
 
-Live Fiber testnet verification is still blocked until a real public-node payment reaches `Paid`.
-Public Fiber testnet RPC contact is proven, and the real adapter is aligned to official Fiber v0.8.1 RPC shape, but that is not paid proof.
+Live paid Fiber testnet verification is proven. See the tagged commit `fiberlatch-live-paid-proof`.
 
-Current payment blocker:
-- local `fnn` v0.8.1 runs with a funded testnet account
-- the local channel to public node1 reached `ChannelReady`
-- public node2 invoice creation and `get_invoice(payment_hash)` work
-- automatic `send_payment` failed with `PathFind error: no path found`
-- `send_payment` with `trampoline_hops` through node1 failed with `max outbound liquidity 0`
-- node2 invoices remained `Open`
+What was done:
+- local `fnn` v0.8.1 ran with a funded testnet account and a `ChannelReady` channel to public node1
+- a tiny testnet payment (1,000 shannons) was routed through public node1 to a public node2 invoice via trampoline
+- the node2 invoice reached `Paid`
+- `demo-live-paid-issuance.ts` ingested the paid `payment_hash`, created an `AccessIntent`, issued a signed `AccessReceipt`, verified it, and confirmed second redemption is denied
+
+To rerun a fresh live proof, you need:
+- a local `fnn` node with a funded testnet account
+- a live `ChannelReady` channel to public node1
+- a fresh node2 invoice paid via trampoline
+- `FIBER_CLIENT_MODE=real FIBER_NETWORK=testnet FIBER_RPC_URL=<node2 url> FIBER_MANUAL_PAYMENT_HASH=<paid hash> npm run demo:live-paid-issuance`
 
 See:
 - [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
-- [`docs/live-fiber-next-steps.md`](docs/live-fiber-next-steps.md)
+- [`docs/routing-diagnostics.md`](docs/routing-diagnostics.md)
