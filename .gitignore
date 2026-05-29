@@ -27,3 +27,5 @@ ckb/key
 *.pem
 *.key
 *.sqlite-journal
+
+brain/
