@@ -24,11 +24,11 @@ What is simulated:
 - paid/unpaid/failed/expired status signals
 - the local demo payment success path
 
-What live Fiber proof still needs:
-- a real Fiber testnet endpoint
-- a real paid Fiber `payment_hash`
-- a sanitized live verification run
-- confirmation of any endpoint-specific auth behavior, if applicable
+What live Fiber proof achieved:
+- a real Fiber testnet endpoint was reached
+- a real paid Fiber `payment_hash` was verified
+- a sanitized live verification run was completed
+- testnet-only proof is now complete
 
 Why this does not overlap Spindle, checkout, POS, or creator tooling:
 - FiberLatch does not sell anything

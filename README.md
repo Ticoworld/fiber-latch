@@ -13,7 +13,7 @@ Current proof status:
 Start here:
 - [`QUICKSTART.md`](QUICKSTART.md)
 - [`docs/reviewer-notes.md`](docs/reviewer-notes.md)
-- [`docs/live-fiber-next-steps.md`](docs/live-fiber-next-steps.md)
+- [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
 
 What FiberLatch is:
 - backend-only
