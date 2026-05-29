@@ -1,3 +1,4 @@
+/// <reference path="../src/types/fastify.d.ts" />
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { rmSync } from "node:fs";
