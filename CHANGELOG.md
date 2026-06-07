@@ -1,6 +1,6 @@
 # Changelog
 
-All entries describe what was proven or changed in each phase. Proof boundaries are stated explicitly. No live paid Fiber verification has been proven yet.
+All entries describe what was proven or changed in each phase. Proof boundaries are stated explicitly. Live paid Fiber testnet verification is proven at Phase 3. See tag `fiberlatch-live-paid-proof`.
 
 ---
 

@@ -153,6 +153,10 @@ async function main(): Promise<void> {
         payload: { receiptToken },
       });
 
+      if (verifyResponse.statusCode !== 200) {
+        throw new Error(`Receipt verification returned ${verifyResponse.statusCode}: ${verifyResponse.body}`);
+      }
+
       const firstRedemptionResponse = await app.inject({
         method: "POST",
         url: "/v1/receipts/redeem",
@@ -162,6 +166,10 @@ async function main(): Promise<void> {
           subject: { type: "END_USER", id: subjectId },
         },
       });
+
+      if (firstRedemptionResponse.statusCode !== 200) {
+        throw new Error(`First redemption returned ${firstRedemptionResponse.statusCode}: ${firstRedemptionResponse.body}`);
+      }
 
       const secondRedemptionResponse = await app.inject({
         method: "POST",
