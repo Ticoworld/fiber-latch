@@ -130,7 +130,65 @@ const decision = checkRedemptionPolicy({
 });
 ```
 
+Note: `checkRedemptionPolicy` above is an early, overly broad example name from Phase 4. See "Redemption policy boundary" below for the corrected scope and naming guidance. A future helper may only cover pre-atomic denial checks, not the full GRANTED/EXHAUSTED decision.
+
 The SDK should prefer pure functions and narrow interfaces. It should not own persistence, HTTP routing, background scheduling, or app-specific access policy storage.
+
+## Redemption policy boundary
+
+Phase 6D scouted whether redemption decision logic could be extracted into a pure helper. The verdict was: not yet, and only a narrow slice of it ever should be. This section records that boundary so it is not re-litigated or accidentally widened later.
+
+### What a future pure helper may own
+
+If a pure redemption-denial helper is built later, it may only own checks that can be decided from a plain snapshot, before any database write is attempted:
+
+- invalid signature / invalid token (including an expired JWT or a JWT that fails claim validation)
+- receipt not found (signature verifies, but no stored receipt matches)
+- expired receipt/token denial (JWT-level `exp`, or the stored receipt's `exp`, evaluated against `now`)
+- claim vs. request mismatch (signed claims do not match the stored receipt, or the stored receipt does not match the requested resource/subject)
+- inactive or invalid snapshot denial, when the snapshot already shows the receipt is revoked, exhausted, or expired
+
+### What a future pure helper must not own
+
+A future pure helper must not pretend to decide or perform:
+
+- a successful (GRANTED) redemption
+- the `redemptionCount` increment
+- the `ISSUED` -> `EXHAUSTED` transition
+- duplicate redemption protection
+- concurrent redemption race handling
+- any database read or write
+- the atomic update result
+
+### Source of truth
+
+The backend reference implementation remains the sole source of truth for:
+
+- atomic redemption
+- the `GRANTED` result
+- the `EXHAUSTED` transition
+- the final `active` / `status` / `redemptionCount` mutation
+
+Today this is `FiberLatchService.redeemAccessReceipt` together with `redeemAccessReceiptAtomically`. Nothing in this section changes that.
+
+### Why this boundary exists
+
+- One-time redemption is a statement about stored state changing exactly once. A pure function with no storage cannot make that guarantee by itself.
+- A JWT `jti` only helps with replay prevention if the host application tracks which `jti` values have already been redeemed. The token does not "know" it has been used; something with storage has to record that.
+- A snapshot-based helper reads receipt state at one point in time. Between that read and the database write, another request can redeem the same receipt. The snapshot can be stale before the write happens.
+- If GRANTED/EXHAUSTED logic is duplicated in a pure helper and in the atomic database update, the two copies can drift apart over time (for example, a fix applied to one but not the other), silently weakening access control.
+
+### Naming guidance
+
+Avoid naming a future helper `checkRedemptionPolicy`. That name implies it owns the full GRANTED/DENIED decision, which it cannot do safely.
+
+If a pre-atomic denial helper is built later, prefer a narrower name, for example:
+
+```ts
+evaluatePreAtomicRedemptionDenial(input): PreAtomicRedemptionDenial | null
+```
+
+This is a future candidate name only. It is not implemented today, and no code in this repository currently provides this function.
 
 ## custom_records findings
 
