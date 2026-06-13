@@ -1,4 +1,4 @@
-import type { AccessIntentStatus } from "@prisma/client";
+import type { AccessIntentStatus } from "../../domain/access-state";
 
 export type FiberNormalizedIntentState =
   | "waiting"
