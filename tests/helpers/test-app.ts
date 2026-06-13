@@ -5,13 +5,18 @@ import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import { buildApp } from "../../src/app";
 import type { FiberLatchRuntimeConfig } from "../../src/config/runtime";
+import { loadReceiptSigningKeyMaterial } from "../../src/config/signing-key";
 import type { FiberClient } from "../../src/integrations/fiber/fiber-client";
+import { createJwtAccessReceiptSigner } from "../../src/integrations/receipts/jwt-access-receipt-signer";
+import type { AccessReceiptSigner } from "../../src/integrations/receipts/access-receipt-signer";
 import type { FiberLatchService } from "../../src/services/fiber-latch-service";
 
 export interface TestAppContext {
   app: Awaited<ReturnType<typeof buildApp>>;
   prisma: PrismaClient;
   service: FiberLatchService;
+  receiptSigner: AccessReceiptSigner;
+  runtimeConfig: FiberLatchRuntimeConfig;
   cleanup: () => Promise<void>;
 }
 
@@ -71,11 +76,18 @@ export async function createTestApp(
     ...runtimeOverrides,
   };
 
+  const signingKeyMaterial = await loadReceiptSigningKeyMaterial({
+    privateJwkJson: runtimeConfig.privateJwkJson,
+  });
+  const receiptSigner = createJwtAccessReceiptSigner(signingKeyMaterial, runtimeConfig.issuer, runtimeConfig.audience);
+
   const app = await buildApp({
     prisma,
     runtimeConfig,
     fiberClient,
     logger: false,
+    signingKeyMaterial,
+    receiptSigner,
   });
 
   await app.ready();
@@ -84,6 +96,8 @@ export async function createTestApp(
     app,
     prisma,
     service: app.fiberLatch,
+    receiptSigner,
+    runtimeConfig,
     cleanup: async () => {
       await app.close();
       await prisma.$disconnect();
