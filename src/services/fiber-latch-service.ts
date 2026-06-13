@@ -32,6 +32,7 @@ import type { DbClient } from "../repositories/types";
 import { sha256Hex } from "../lib/hash";
 import type { FiberLatchRuntimeConfig } from "../config/runtime";
 import { isIsoDateExpired } from "../domain/access-state";
+import { evaluatePreAtomicRedemptionDenial } from "../domain/redemption-policy";
 
 export interface CreateAccessIntentInput {
   resource: {
@@ -523,88 +524,32 @@ export class FiberLatchService {
     },
   ): Promise<RedemptionView> {
     const redeemedAt = new Date().toISOString();
+    const now = new Date();
     const signature = await this.receiptSigner.verify(receiptToken);
 
-    if (!signature.verified || !signature.claims) {
-      const expired = signature.reason === "RECEIPT_EXPIRED";
-      return {
-        status: "DENIED",
-        accessGranted: false,
-        accessReceiptId: null,
-        accessIntentId: null,
-        jti: null,
-        receiptStatus: expired ? "EXPIRED" : null,
-        resource,
-        subject,
-        redemptionCount: 0,
-        maxRedemptions: 0,
-        redeemedAt,
-        reason: signature.reason ?? "INVALID_RECEIPT_TOKEN",
-      };
-    }
+    const receipt =
+      signature.verified && signature.claims
+        ? await getAccessReceiptByJti(this.db, signature.claims.jti)
+        : null;
 
-    const receipt = await getAccessReceiptByJti(this.db, signature.claims.jti);
+    const preAtomicDenial = evaluatePreAtomicRedemptionDenial({
+      signature,
+      receipt,
+      resource,
+      subject,
+      redeemedAt,
+      now,
+    });
+
+    if (preAtomicDenial) {
+      if (preAtomicDenial.reason === "RECEIPT_EXPIRED" && receipt) {
+        await setReceiptExpired(this.db, receipt.id, now);
+      }
+      return preAtomicDenial;
+    }
 
     if (!receipt) {
-      return {
-        status: "DENIED",
-        accessGranted: false,
-        accessReceiptId: null,
-        accessIntentId: null,
-        jti: signature.claims.jti,
-        receiptStatus: null,
-        resource,
-        subject,
-        redemptionCount: 0,
-        maxRedemptions: 0,
-        redeemedAt,
-        reason: "RECEIPT_NOT_FOUND",
-      };
-    }
-
-    if (isIsoDateExpired(receipt.exp.toISOString())) {
-      await setReceiptExpired(this.db, receipt.id, new Date());
-      return {
-        status: "DENIED",
-        accessGranted: false,
-        accessReceiptId: receipt.id,
-        accessIntentId: receipt.accessIntentId,
-        jti: receipt.jti,
-        receiptStatus: "EXPIRED",
-        resource,
-        subject,
-        redemptionCount: receipt.redemptionCount,
-        maxRedemptions: receipt.maxRedemptions,
-        redeemedAt,
-        reason: "RECEIPT_EXPIRED",
-      };
-    }
-
-    if (
-      signature.claims.intent_id !== receipt.accessIntentId ||
-      signature.claims.resource_id !== receipt.resourceKey ||
-      signature.claims.policy_id !== receipt.resourcePolicyId ||
-      signature.claims.sub !== receipt.subjectId ||
-      signature.claims.max_redemptions !== receipt.maxRedemptions ||
-      resource.key !== receipt.resourceKey ||
-      resource.type !== receipt.resourceType ||
-      subject.id !== receipt.subjectId ||
-      subject.type !== receipt.subjectType
-    ) {
-      return {
-        status: "DENIED",
-        accessGranted: false,
-        accessReceiptId: receipt.id,
-        accessIntentId: receipt.accessIntentId,
-        jti: receipt.jti,
-        receiptStatus: receipt.status,
-        resource,
-        subject,
-        redemptionCount: receipt.redemptionCount,
-        maxRedemptions: receipt.maxRedemptions,
-        redeemedAt,
-        reason: "RECEIPT_CLAIMS_MISMATCH",
-      };
+      throw new Error("evaluatePreAtomicRedemptionDenial returned null without a stored receipt");
     }
 
     const redemption = await redeemAccessReceiptAtomically(this.db, receipt.id, new Date());
