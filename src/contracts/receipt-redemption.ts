@@ -19,7 +19,7 @@ export const RedeemAccessReceiptResponseSchema = z.object({
     resource: ResourceSchema,
     subject: SubjectSchema,
     redemptionCount: z.number().int().nonnegative(),
-    maxRedemptions: z.number().int().positive(),
+    maxRedemptions: z.number().int().nonnegative(),
     redeemedAt: z.string().datetime(),
     reason: z.string().nullable(),
   }),
