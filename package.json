@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "fiber:testnet:verify": "tsx scripts/fiber-testnet-verify.ts",
     "demo:local-access": "tsx scripts/demo-local-access.ts",
+    "demo:protected-resource": "tsx scripts/demo-protected-resource.ts",
     "demo:live-paid-issuance": "tsx scripts/demo-live-paid-issuance.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

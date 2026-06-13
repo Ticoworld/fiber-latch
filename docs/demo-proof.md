@@ -39,3 +39,24 @@ Honest claim:
 FiberLatch proves its local receipt lifecycle end to end.
 FiberLatch also proves a full testnet path: a live paid Fiber `payment_hash` was verified through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
 This is testnet-only proof. See `scripts/demo-live-paid-issuance.ts` and the tagged commit `fiberlatch-live-paid-proof`.
+
+## Protected resource demo
+
+`scripts/demo-protected-resource.ts` shows how a third-party resource server could use a FiberLatch receipt to decide whether to return protected content.
+
+What it proves:
+- a request with no receipt token is denied without calling FiberLatch at all
+- a request with a valid, freshly issued receipt is granted and the protected content is returned
+- a second request with the same (now-redeemed) receipt is denied and the protected content is not returned
+
+What is a stand-in:
+- the "protected resource" is an in-memory constant (a short string), not a real file, route, or server
+- the "gate" function is a local stand-in for a third-party resource server's access check
+
+What is real:
+- the receipt issuance, verification-by-redemption, and one-time redemption enforcement are the same FiberLatch routes and behavior used elsewhere
+
+What is fake:
+- the Fiber payment source, same as `scripts/demo-local-access.ts`
+
+This demo is local/fake-Fiber only and makes no production or mainnet readiness claim.

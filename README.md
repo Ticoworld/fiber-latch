@@ -43,6 +43,7 @@ Public routes:
 
 Local demo:
 - `npm run demo:local-access`
+- `npm run demo:protected-resource`
 
 Validation:
 - `npm test`
