@@ -1,14 +1,16 @@
 import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
+import { buildAccessReceiptClaims } from "../../domain/receipt-claims";
+import type { AccessReceiptSignInput } from "../../domain/receipt-claims";
 import type {
-  AccessReceiptClaims,
-  AccessReceiptSignInput,
   AccessReceiptSigner,
   JwksDocument,
   SignedAccessReceipt,
   VerifiedAccessReceipt,
 } from "./access-receipt-signer";
 import type { ReceiptSigningKeyMaterial } from "../../config/signing-key";
+
+export { buildAccessReceiptClaims } from "../../domain/receipt-claims";
 
 const ClaimsSchema = z.object({
   iss: z.string().min(1),
@@ -25,24 +27,6 @@ const ClaimsSchema = z.object({
   grant_type: z.string().min(1),
   max_redemptions: z.number().int().positive(),
 });
-
-export function buildAccessReceiptClaims(input: AccessReceiptSignInput): AccessReceiptClaims {
-  return {
-    iss: input.issuer,
-    sub: input.subjectId,
-    aud: input.audience,
-    iat: Math.floor(input.issuedAt.getTime() / 1000),
-    nbf: Math.floor(input.notBefore.getTime() / 1000),
-    exp: Math.floor(input.expiresAt.getTime() / 1000),
-    jti: input.jti,
-    intent_id: input.intentId,
-    resource_id: input.resourceId,
-    policy_id: input.policyId,
-    payment_ref: input.paymentRef,
-    grant_type: input.grantType,
-    max_redemptions: input.maxRedemptions,
-  };
-}
 
 export function createJwtAccessReceiptSigner(
   keyMaterial: ReceiptSigningKeyMaterial,

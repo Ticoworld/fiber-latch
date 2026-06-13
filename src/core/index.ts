@@ -19,3 +19,9 @@ export type {
   ResourceType,
   SubjectType,
 } from "../domain/access-state";
+
+export { buildAccessReceiptClaims } from "../domain/receipt-claims";
+export type {
+  AccessReceiptClaims,
+  AccessReceiptSignInput,
+} from "../domain/receipt-claims";

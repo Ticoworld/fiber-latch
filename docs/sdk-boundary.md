@@ -197,12 +197,13 @@ This is implemented today in `src/domain/redemption-policy.ts`. It returns a den
 - `mapFiberRawStatus` and its `FiberStatusMapping` / `FiberNormalizedIntentState` types
 - `evaluatePreAtomicRedemptionDenial` and its related types (`PreAtomicRedemptionDenial`, `EvaluatePreAtomicRedemptionDenialInput`, `PreAtomicRedemptionSignatureResult`, `PreAtomicRedemptionSignatureClaims`, `PreAtomicRedemptionReceiptSnapshot`)
 - the shared domain types those helpers depend on from `src/domain/access-state.ts` (`AccessIntentStatus`, `AccessReceiptStatus`, `ResourceType`, `SubjectType`)
+- `buildAccessReceiptClaims` and its `AccessReceiptClaims` / `AccessReceiptSignInput` types
 
 This is not a published SDK or package. It creates no new package boundary, has no separate `package.json`, and is not installable on its own.
 
-It deliberately excludes `buildAccessReceiptClaims`. That helper is pure, but it still lives inside `src/integrations/receipts/jwt-access-receipt-signer.ts`, a module that also imports `jose`, `zod`, and the backend signing-key config. Re-exporting it from the core barrel today would transitively pull those dependencies along with it. It will be considered for the core barrel only after it is isolated from that module in a later phase.
+`buildAccessReceiptClaims` and its types now live in `src/domain/receipt-claims.ts`, a dependency-light domain module with no imports of `jose`, `zod`, Prisma, Fastify, or the backend signing-key config. `src/integrations/receipts/jwt-access-receipt-signer.ts` imports the helper from there for use in `createJwtAccessReceiptSigner`, and `src/integrations/receipts/access-receipt-signer.ts` re-exports the two types for backward compatibility with existing imports. Moving this helper did not change the JWT claim shape, token contents, signing behavior, or verification behavior.
 
-The backend remains the reference implementation. `GRANTED` and `EXHAUSTED` redemption results remain owned by `FiberLatchService.redeemAccessReceipt` together with `redeemAccessReceiptAtomically`; nothing in the core barrel changes that.
+The backend remains the reference implementation. JWT signing and verification (`createJwtAccessReceiptSigner`) remain backend/reference implementation. `GRANTED` and `EXHAUSTED` redemption results remain owned by `FiberLatchService.redeemAccessReceipt` together with `redeemAccessReceiptAtomically`; nothing in the core barrel changes that.
 
 ## custom_records findings
 

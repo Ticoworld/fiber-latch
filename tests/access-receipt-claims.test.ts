@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildAccessReceiptClaims } from "../src/integrations/receipts/jwt-access-receipt-signer";
-import type { AccessReceiptSignInput } from "../src/integrations/receipts/access-receipt-signer";
+import { buildAccessReceiptClaims } from "../src/core";
+import type { AccessReceiptSignInput } from "../src/core";
 
 describe("buildAccessReceiptClaims", () => {
   const baseInput: AccessReceiptSignInput = {
