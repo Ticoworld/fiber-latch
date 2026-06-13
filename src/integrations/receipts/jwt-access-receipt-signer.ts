@@ -26,7 +26,7 @@ const ClaimsSchema = z.object({
   max_redemptions: z.number().int().positive(),
 });
 
-function toClaims(input: AccessReceiptSignInput): AccessReceiptClaims {
+export function buildAccessReceiptClaims(input: AccessReceiptSignInput): AccessReceiptClaims {
   return {
     iss: input.issuer,
     sub: input.subjectId,
@@ -51,7 +51,7 @@ export function createJwtAccessReceiptSigner(
 ): AccessReceiptSigner {
   return {
     async sign(input: AccessReceiptSignInput): Promise<SignedAccessReceipt> {
-      const claims = toClaims(input);
+      const claims = buildAccessReceiptClaims(input);
       const token = await new SignJWT({
         intent_id: claims.intent_id,
         resource_id: claims.resource_id,
