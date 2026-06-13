@@ -190,6 +190,20 @@ evaluatePreAtomicRedemptionDenial(input): PreAtomicRedemptionDenial | null
 
 This is implemented today in `src/domain/redemption-policy.ts`. It returns a denial only for the pre-atomic cases listed above, or `null` when no pre-atomic denial applies. A `null` result is not a grant; `FiberLatchService.redeemAccessReceipt` still calls `redeemAccessReceiptAtomically` to decide GRANTED or EXHAUSTED. This does not create or imply an SDK package; the helper lives in the backend reference implementation alongside the rest of the domain logic.
 
+## Internal core barrel
+
+`src/core/index.ts` now exists as an internal core barrel. It is a convenience entry point that re-exports already-clean pure helpers and their types:
+
+- `mapFiberRawStatus` and its `FiberStatusMapping` / `FiberNormalizedIntentState` types
+- `evaluatePreAtomicRedemptionDenial` and its related types (`PreAtomicRedemptionDenial`, `EvaluatePreAtomicRedemptionDenialInput`, `PreAtomicRedemptionSignatureResult`, `PreAtomicRedemptionSignatureClaims`, `PreAtomicRedemptionReceiptSnapshot`)
+- the shared domain types those helpers depend on from `src/domain/access-state.ts` (`AccessIntentStatus`, `AccessReceiptStatus`, `ResourceType`, `SubjectType`)
+
+This is not a published SDK or package. It creates no new package boundary, has no separate `package.json`, and is not installable on its own.
+
+It deliberately excludes `buildAccessReceiptClaims`. That helper is pure, but it still lives inside `src/integrations/receipts/jwt-access-receipt-signer.ts`, a module that also imports `jose`, `zod`, and the backend signing-key config. Re-exporting it from the core barrel today would transitively pull those dependencies along with it. It will be considered for the core barrel only after it is isolated from that module in a later phase.
+
+The backend remains the reference implementation. `GRANTED` and `EXHAUSTED` redemption results remain owned by `FiberLatchService.redeemAccessReceipt` together with `redeemAccessReceiptAtomically`; nothing in the core barrel changes that.
+
 ## custom_records findings
 
 Fiber `custom_records` may be useful as optional correlation metadata. They are not required for the proven flow because FiberLatch already maps a paid `payment_hash` to an access intent and receipt.
