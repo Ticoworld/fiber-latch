@@ -16,6 +16,15 @@ What is proven:
 - duplicate redemption is rejected
 - reconciliation can issue a single receipt from the fake Fiber path
 
+Protected resource demo:
+- run with `npm run demo:protected-resource`
+- proves a request with no receipt token is denied
+- proves a request with a valid, freshly issued receipt unlocks the protected content once
+- proves a second request with the same (now-redeemed) receipt is denied
+- uses the same local/fake-Fiber setup as `npm run demo:local-access`
+- the "protected resource" is an in-memory stand-in (a short string), not a real file, route, or server
+- see `docs/demo-proof.md` for the full real-vs-fake breakdown
+
 What is aligned but not live-proven:
 - the real Fiber adapter matches the official Fiber v0.8.1 RPC method names, params shape, and status vocabulary
 

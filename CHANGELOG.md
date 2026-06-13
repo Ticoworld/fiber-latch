@@ -4,6 +4,18 @@ All entries describe what was proven or changed in each phase. Proof boundaries 
 
 ---
 
+## Phase 4–7 — 2026-06-13
+
+### SDK/core boundary and redemption policy hardening
+
+- Documented the SDK/core boundary in `docs/sdk-boundary.md`. No SDK package was created; the backend remains the reference implementation.
+- Added access-control edge-case tests for the redeem path (resource/subject mismatch, expired receipt, invalid signature, claim mismatch).
+- Extracted `evaluatePreAtomicRedemptionDenial` into `src/domain/redemption-policy.ts`. It decides pre-atomic `DENIED` cases only; it does not decide `GRANTED` or `EXHAUSTED`. Atomic redemption stays in `redeemAccessReceiptAtomically`, unchanged.
+- Added `npm run demo:protected-resource`, showing a third-party-style resource gate built on the existing `/v1/receipts/redeem` route, against an in-memory protected-resource stand-in.
+- Still local/fake-Fiber or testnet-only proof. No production or mainnet readiness claim.
+
+---
+
 ## Phase 3 — 2026-05-27
 
 ### Live Paid Fiber Verification Proven
@@ -163,8 +175,9 @@ See `docs/demo-proof.md`.
 
 ---
 
-## Current validation (as of 2026-05-27)
+## Current validation (as of 2026-06-13)
 
-- `npm test`: **32 tests, 3 files, all pass.**
+- `npm test`: **52 tests, 7 files, all pass.**
 - `npm run build`: **TypeScript compile clean.**
 - `npm run demo:local-access`: **First redemption `GRANTED`, second redemption `DENIED`.**
+- `npm run demo:protected-resource`: **No-receipt attempt denied, valid receipt unlocks content once, reused receipt denied.**

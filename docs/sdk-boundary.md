@@ -136,11 +136,11 @@ The SDK should prefer pure functions and narrow interfaces. It should not own pe
 
 ## Redemption policy boundary
 
-Phase 6D scouted whether redemption decision logic could be extracted into a pure helper. The verdict was: not yet, and only a narrow slice of it ever should be. This section records that boundary so it is not re-litigated or accidentally widened later.
+Phase 6D scouted whether redemption decision logic could be extracted into a pure helper. The verdict was: only a narrow slice of it ever should be. Phase 6G implemented that narrow slice as `evaluatePreAtomicRedemptionDenial` in `src/domain/redemption-policy.ts`, called from `FiberLatchService.redeemAccessReceipt`. This section records the boundary so it is not re-litigated or accidentally widened later.
 
-### What a future pure helper may own
+### What the implemented pure helper owns
 
-If a pure redemption-denial helper is built later, it may only own checks that can be decided from a plain snapshot, before any database write is attempted:
+`evaluatePreAtomicRedemptionDenial` owns checks that can be decided from a plain snapshot, before any database write is attempted:
 
 - invalid signature / invalid token (including an expired JWT or a JWT that fails claim validation)
 - receipt not found (signature verifies, but no stored receipt matches)
@@ -148,9 +148,9 @@ If a pure redemption-denial helper is built later, it may only own checks that c
 - claim vs. request mismatch (signed claims do not match the stored receipt, or the stored receipt does not match the requested resource/subject)
 - inactive or invalid snapshot denial, when the snapshot already shows the receipt is revoked, exhausted, or expired
 
-### What a future pure helper must not own
+### What the pure helper must not own
 
-A future pure helper must not pretend to decide or perform:
+`evaluatePreAtomicRedemptionDenial` does not decide or perform:
 
 - a successful (GRANTED) redemption
 - the `redemptionCount` increment
@@ -180,15 +180,15 @@ Today this is `FiberLatchService.redeemAccessReceipt` together with `redeemAcces
 
 ### Naming guidance
 
-Avoid naming a future helper `checkRedemptionPolicy`. That name implies it owns the full GRANTED/DENIED decision, which it cannot do safely.
+Avoid naming this helper `checkRedemptionPolicy`. That name would imply it owns the full GRANTED/DENIED decision, which it cannot do safely.
 
-If a pre-atomic denial helper is built later, prefer a narrower name, for example:
+The implemented helper uses a narrower name and signature:
 
 ```ts
 evaluatePreAtomicRedemptionDenial(input): PreAtomicRedemptionDenial | null
 ```
 
-This is a future candidate name only. It is not implemented today, and no code in this repository currently provides this function.
+This is implemented today in `src/domain/redemption-policy.ts`. It returns a denial only for the pre-atomic cases listed above, or `null` when no pre-atomic denial applies. A `null` result is not a grant; `FiberLatchService.redeemAccessReceipt` still calls `redeemAccessReceiptAtomically` to decide GRANTED or EXHAUSTED. This does not create or imply an SDK package; the helper lives in the backend reference implementation alongside the rest of the domain logic.
 
 ## custom_records findings
 

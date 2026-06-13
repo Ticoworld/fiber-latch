@@ -87,4 +87,3 @@ To rerun a fresh live proof, you need:
 
 See:
 - [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
-- [`docs/routing-diagnostics.md`](docs/routing-diagnostics.md)
