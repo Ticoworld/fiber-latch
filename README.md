@@ -49,7 +49,7 @@ Validation:
 - `npm test`
 - `npm run build`
 
-Live Fiber blocker:
+Live Fiber verification status:
 - [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
 
 Proof note:

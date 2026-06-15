@@ -177,7 +177,7 @@ See `docs/demo-proof.md`.
 
 ## Current validation (as of 2026-06-13)
 
-- `npm test`: **52 tests, 7 files, all pass.**
+- `npm test`: **57 tests, 8 files, all pass.**
 - `npm run build`: **TypeScript compile clean.**
 - `npm run demo:local-access`: **First redemption `GRANTED`, second redemption `DENIED`.**
 - `npm run demo:protected-resource`: **No-receipt attempt denied, valid receipt unlocks content once, reused receipt denied.**
