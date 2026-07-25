@@ -26,7 +26,8 @@ export async function createTestApp(
 ): Promise<TestAppContext> {
   const dbFileName = `debug-test-${randomUUID()}.db`;
   const dbFile = path.join(process.cwd(), dbFileName);
-  const databaseUrl = `file:./${dbFileName}`;
+  // Use an absolute SQLite URL so Prisma resolves the same database file in every worktree.
+  const databaseUrl = `file:${dbFile.replace(/\\/g, "/")}`;
 
   rmSync(dbFile, { force: true });
   rmSync(`${dbFile}-journal`, { force: true });
