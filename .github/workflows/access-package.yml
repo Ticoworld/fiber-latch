@@ -1,0 +1,49 @@
+name: access-package
+
+on:
+  push:
+    paths:
+      - "packages/access/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/access-package.yml"
+  pull_request:
+    paths:
+      - "packages/access/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/access-package.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm test
+
+      - name: Run backend build
+        run: npm run build
+
+      - name: Verify access package
+        run: npm run verify:access:package

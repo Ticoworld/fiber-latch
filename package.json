@@ -15,8 +15,16 @@
     "demo:live-paid-issuance": "tsx scripts/demo-live-paid-issuance.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "build:access": "npm run build --workspace @fiberlatch/access",
+    "lint:access:package": "npm run lint:package --workspace @fiberlatch/access",
+    "check:access:types": "npm run check:types --workspace @fiberlatch/access",
+    "test:access:distribution": "npm run test:distribution --workspace @fiberlatch/access",
+    "verify:access:package": "npm run build:access && npm run lint:access:package && npm run check:access:types && npm run test:access:distribution"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
