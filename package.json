@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "test": "vitest run",
+    "test": "vitest run tests",
     "test:watch": "vitest",
     "fiber:testnet:verify": "tsx scripts/fiber-testnet-verify.ts",
     "demo:local-access": "tsx scripts/demo-local-access.ts",
@@ -19,8 +19,9 @@
     "build:access": "npm run build --workspace @fiberlatch/access",
     "lint:access:package": "npm run lint:package --workspace @fiberlatch/access",
     "check:access:types": "npm run check:types --workspace @fiberlatch/access",
+    "test:access": "vitest run packages/access/test/receipt-claims.test.ts",
     "test:access:distribution": "npm run test:distribution --workspace @fiberlatch/access",
-    "verify:access:package": "npm run build:access && npm run lint:access:package && npm run check:access:types && npm run test:access:distribution"
+    "verify:access:package": "npm run test:access && npm run build:access && npm run lint:access:package && npm run check:access:types && npm run test:access:distribution"
   },
   "workspaces": [
     "packages/*"

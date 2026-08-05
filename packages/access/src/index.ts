@@ -1,8 +1,8 @@
-/**
- * FiberLatch Access reusable package.
- *
- * Public receipt APIs are added in implementation steps that include their
- * validation, security rules, and tests. This file is intentionally empty
- * during the package-distribution skeleton step.
- */
-export {};
+export { AccessReceiptValidationError } from "./errors.js";
+export { buildAccessReceiptClaims } from "./receipt-claims.js";
+export type { AccessReceiptValidationIssue } from "./errors.js";
+export type {
+  AccessReceiptClaims,
+  AccessReceiptGrantType,
+  BuildAccessReceiptClaimsInput,
+} from "./receipt-claims.js";
