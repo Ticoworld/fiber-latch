@@ -166,13 +166,45 @@ The initial public API stays deliberately small:
 | Export | Purpose | Trusted and untrusted inputs | Result | Failures | I/O boundary | Security responsibility |
 | ------ | ------- | ---------------------------- | ------ | -------- | ------------ | ----------------------- |
 | `buildAccessReceiptClaims` | Build a canonical trusted claim object from host-provided facts | Trusted runtime, policy, payment-correlation, and binding inputs; no token input | Canonical claim object | Throws a package-owned validation error for invalid trusted input, missing or invalid trusted inputs, empty required fields, invalid time ordering, inconsistent grant fields | Pure | Trusted claim construction before signing |
-| `createAccessReceiptSigner` | Create a signer bound to trusted private key material | Trusted private `OKP` JWK and trusted config; no untrusted token input | Signer function or object | Throws a package-owned configuration error for invalid key material, metadata, or header policy | Pure after construction | Trusted key use and protected-header construction |
-| `createAccessReceiptVerifier` | Create a verifier for untrusted compact receipts | Untrusted token input plus trusted issuer, audience, and public keys | Sanitised verified claims | Throws a package-owned configuration error for invalid trusted keys, issuer, audience, limits, or token-size policy | Pure | Cryptographic verification and claim sanitisation |
+| `createAccessReceiptSigner` | Create a signer bound to trusted private key material | Trusted private `OKP` JWK and trusted config; no untrusted token input | Promise of a signer function | Factory promise rejects with a package-owned configuration error for invalid key material, metadata, or header policy | Pure after construction | Trusted key use and protected-header construction |
+| `createAccessReceiptVerifier` | Create a verifier for untrusted compact receipts | Untrusted token input plus trusted issuer, audience, and public keys | Promise of an asynchronous verifier function | Factory promise rejects with a package-owned configuration error for invalid trusted keys, issuer, audience, limits, or token-size policy | Pure | Cryptographic verification and claim sanitisation |
 | `evaluateAccessReceiptBindings` | Compare verified claims against host expected bindings | Sanitised verified claims plus trusted expected subject, resource, policy, intent, and optional redemption policy | Binding evaluation result | Typed binding denial for mismatch or missing required expected context; expected denials are returned, not thrown | Pure | Host-context authorisation precheck |
 | `redeemAccessReceipt` | Orchestrate verification, binding evaluation, and atomic host consumption | Receipt token, expected host context, trusted verification material, trusted store adapter | Typed redemption outcome with separate verification, binding, consumption, and system phases | Verification denial, binding denial, consumption denial, or system failure; expected denials are returned as typed results | Host-owned I/O through the adapter | Host-owned persistent authority and atomic redemption |
 | `AccessReceiptStore` | Type-only contract for the atomic trusted store boundary | Narrow trusted consumption command and trusted host context | Typed consume outcome | Missing record, revoked receipt, exhausted receipt, conflict, persistence failure | Host-owned I/O | Authoritative persistence and replay protection |
 
 `AccessReceiptStore` is a TypeScript type-only public contract, not a runtime class. The package ships no HTTP handlers, no Prisma models, and no backend repository types. `redeemAccessReceipt` returns a typed package outcome with distinct verification, binding, consumption, and system phases, but never serves the protected resource itself. The host remains responsible for the final response.
+
+### Verifier invocation and ordinary-failure contract
+
+`createAccessReceiptSigner` and `createAccessReceiptVerifier` return promises. Each factory validates its trusted configuration and imports its trusted keys before resolving. Invalid trusted configuration causes the factory-construction promise to reject with `AccessReceiptConfigurationError`.
+
+The public signer and verifier shapes are:
+
+```ts
+export type AccessReceiptSigner = (
+  claims: AccessReceiptClaims
+) => Promise<string>;
+
+export declare function createAccessReceiptSigner(
+  config: AccessReceiptSignerConfiguration
+): Promise<AccessReceiptSigner>;
+
+export type AccessReceiptVerifier = (token: string) => Promise<AccessReceiptClaims>;
+
+export declare function createAccessReceiptVerifier(
+  config: AccessReceiptVerifierConfiguration
+): Promise<AccessReceiptVerifier>;
+```
+
+Successful verification resolves with sanitised `AccessReceiptClaims` only. Expected invalid-token verification causes the returned `AccessReceiptVerifier` promise to reject with `AccessReceiptVerificationError`. The error has stable public properties:
+
+```ts
+export class AccessReceiptVerificationError extends Error {
+  readonly code = "verification_denied" as const;
+}
+```
+
+The verification error has stable name `AccessReceiptVerificationError` and message `Access receipt verification failed.`. Specific verification categories may remain internal for diagnostics and testing, but are not part of the stable public API. The verification error must not expose the full token, its signature segment, decoded unknown claim values, trusted JWK material, or raw JOSE or Zod errors. The verifier must never return claims when verification fails. Future `redeemAccessReceipt` maps `AccessReceiptVerificationError` to `verification_denied`; binding denials map to `binding_denied`, store denials map to `consumption_denied`, and unexpected internal failures remain distinguishable as `system_failure`. Verification remains pure and offline, with no database, Fiber RPC, network key retrieval, remote JWKS, or host authorization decision.
 
 Failure policy:
 
