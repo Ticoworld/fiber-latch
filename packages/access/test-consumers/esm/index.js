@@ -47,6 +47,29 @@ if (verified.sub !== "user_42" || verified.payment_ref !== null) {
   throw new Error("Expected the sign-and-verify round trip to preserve claims.");
 }
 
+const matched = access.evaluateAccessReceiptBindings(verified, {
+  sub: verified.sub,
+  resource_id: verified.resource_id,
+  policy_id: verified.policy_id,
+  intent_id: verified.intent_id,
+  max_redemptions: verified.max_redemptions,
+});
+
+if (JSON.stringify(matched) !== JSON.stringify({ status: "matched" })) {
+  throw new Error("Expected the packed ESM binding to match.");
+}
+
+const denied = access.evaluateAccessReceiptBindings(verified, {
+  sub: verified.sub,
+  resource_id: "course/other-module",
+  policy_id: verified.policy_id,
+  intent_id: verified.intent_id,
+});
+
+if (JSON.stringify(denied) !== JSON.stringify({ status: "binding_denied", phase: "binding" })) {
+  throw new Error("Expected the packed ESM binding denial.");
+}
+
 if (typeof access.AccessReceiptVerificationError !== "function") {
   throw new Error("Expected the verification error export.");
 }

@@ -4,6 +4,7 @@ export {
   AccessReceiptVerificationError,
 } from "./errors.js";
 export { buildAccessReceiptClaims } from "./receipt-claims.js";
+export { evaluateAccessReceiptBindings } from "./receipt-bindings.js";
 export { createAccessReceiptSigner } from "./receipt-signer.js";
 export { createAccessReceiptVerifier } from "./receipt-verifier.js";
 export type { AccessReceiptConfigurationIssue } from "./errors.js";
@@ -18,5 +19,14 @@ export type {
   AccessReceiptGrantType,
   BuildAccessReceiptClaimsInput,
 } from "./receipt-claims.js";
+export type {
+  AccessReceiptBindingResult,
+  AccessReceiptExpectedBindings,
+} from "./receipt-bindings.js";
+export type {
+  AccessReceiptConsumeCommand,
+  AccessReceiptConsumeResult,
+  AccessReceiptStore,
+} from "./access-receipt-store.js";
 export type { AccessReceiptSigner } from "./receipt-signer.js";
 export type { AccessReceiptVerifier } from "./receipt-verifier.js";

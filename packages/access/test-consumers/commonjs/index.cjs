@@ -42,6 +42,28 @@ async function main() {
   if (verified.payment_ref !== "payment_ref_commonjs_01") {
     throw new Error("Expected the payment reference to be preserved.");
   }
+
+  const matched = access.evaluateAccessReceiptBindings(verified, {
+    sub: verified.sub,
+    resource_id: verified.resource_id,
+    policy_id: verified.policy_id,
+    intent_id: verified.intent_id,
+  });
+
+  if (JSON.stringify(matched) !== JSON.stringify({ status: "matched" })) {
+    throw new Error("Expected the packed CommonJS binding to match.");
+  }
+
+  const denied = access.evaluateAccessReceiptBindings(verified, {
+    sub: verified.sub,
+    resource_id: "course/other-module",
+    policy_id: verified.policy_id,
+    intent_id: verified.intent_id,
+  });
+
+  if (JSON.stringify(denied) !== JSON.stringify({ status: "binding_denied", phase: "binding" })) {
+    throw new Error("Expected the packed CommonJS binding denial.");
+  }
 }
 
 if (typeof access !== "object" || access === null) {
