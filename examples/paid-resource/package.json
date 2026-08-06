@@ -1,0 +1,17 @@
+{
+  "name": "@fiberlatch/paid-resource-example",
+  "version": "0.0.0-development",
+  "private": true,
+  "description": "A grant-specific FiberLatch Access paid-resource example.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "node --test test/paid-resource.test.mjs",
+    "demo": "node src/demo.mjs"
+  },
+  "dependencies": {
+    "@fiberlatch/access": "0.0.0-development"
+  }
+}

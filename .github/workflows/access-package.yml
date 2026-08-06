@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - "packages/access/**"
+      - "examples/paid-resource/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/access-package.yml"
   pull_request:
     paths:
       - "packages/access/**"
+      - "examples/paid-resource/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/access-package.yml"
@@ -50,3 +52,6 @@ jobs:
 
       - name: Verify access package
         run: npm run verify:access:package
+
+      - name: Verify paid-resource example
+        run: npm run verify:access:example

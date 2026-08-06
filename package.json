@@ -21,10 +21,14 @@
     "check:access:types": "npm run check:types --workspace @fiberlatch/access",
     "test:access": "vitest run packages/access/test",
     "test:access:distribution": "npm run test:distribution --workspace @fiberlatch/access",
-    "verify:access:package": "npm run test:access && npm run build:access && npm run lint:access:package && npm run check:access:types && npm run test:access:distribution"
+    "verify:access:package": "npm run test:access && npm run build:access && npm run lint:access:package && npm run check:access:types && npm run test:access:distribution",
+    "test:access:example": "npm run test --workspace @fiberlatch/paid-resource-example",
+    "demo:access:example": "npm run demo --workspace @fiberlatch/paid-resource-example",
+    "verify:access:example": "node examples/paid-resource/scripts/verify-packed.mjs"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "keywords": [],
   "author": "",
