@@ -7,6 +7,7 @@ export { buildAccessReceiptClaims } from "./receipt-claims.js";
 export { evaluateAccessReceiptBindings } from "./receipt-bindings.js";
 export { createAccessReceiptSigner } from "./receipt-signer.js";
 export { createAccessReceiptVerifier } from "./receipt-verifier.js";
+export { redeemAccessReceipt } from "./redeem-access-receipt.js";
 export type { AccessReceiptConfigurationIssue } from "./errors.js";
 export type { AccessReceiptValidationIssue } from "./errors.js";
 export type {
@@ -30,3 +31,8 @@ export type {
 } from "./access-receipt-store.js";
 export type { AccessReceiptSigner } from "./receipt-signer.js";
 export type { AccessReceiptVerifier } from "./receipt-verifier.js";
+export type {
+  AccessReceiptConsumptionDenialReason,
+  AccessReceiptRedemptionResult,
+  RedeemAccessReceiptInput,
+} from "./redeem-access-receipt.js";

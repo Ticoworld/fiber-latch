@@ -64,6 +64,57 @@ async function main() {
   if (JSON.stringify(denied) !== JSON.stringify({ status: "binding_denied", phase: "binding" })) {
     throw new Error("Expected the packed CommonJS binding denial.");
   }
+
+  let consumeCalls = 0;
+  const store = {
+    async consume(command) {
+      consumeCalls += 1;
+      if (command.jti !== verified.jti) {
+        throw new Error("Unexpected redemption command.");
+      }
+      return consumeCalls === 1
+        ? { outcome: "consumed", exhausted: false }
+        : { outcome: "receipt_exhausted" };
+    },
+  };
+
+  const redemptionSuccess = await access.redeemAccessReceipt({
+    token: await signer(claims),
+    expected: {
+      sub: verified.sub,
+      resource_id: verified.resource_id,
+      policy_id: verified.policy_id,
+      intent_id: verified.intent_id,
+    },
+    verifier,
+    store,
+    current_time: now,
+  });
+
+  if (JSON.stringify(redemptionSuccess) !== JSON.stringify({ status: "success", exhausted: false })) {
+    throw new Error("Expected the packed CommonJS redemption success.");
+  }
+
+  const redemptionDenial = await access.redeemAccessReceipt({
+    token: await signer(claims),
+    expected: {
+      sub: verified.sub,
+      resource_id: verified.resource_id,
+      policy_id: verified.policy_id,
+      intent_id: verified.intent_id,
+    },
+    verifier,
+    store,
+    current_time: now,
+  });
+
+  if (JSON.stringify(redemptionDenial) !== JSON.stringify({
+    status: "consumption_denied",
+    phase: "consumption",
+    reason: "receipt_exhausted",
+  })) {
+    throw new Error("Expected the packed CommonJS redemption denial.");
+  }
 }
 
 if (typeof access !== "object" || access === null) {

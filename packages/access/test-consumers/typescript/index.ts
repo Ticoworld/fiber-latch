@@ -127,6 +127,50 @@ const run = async (): Promise<void> => {
       void remaining;
     }
   }
+
+  const redemptionInput: access.RedeemAccessReceiptInput = {
+    token,
+    expected,
+    verifier,
+    store,
+    current_time: now,
+  };
+  const redemptionResult: access.AccessReceiptRedemptionResult =
+    await access.redeemAccessReceipt(redemptionInput);
+
+  if (redemptionResult.status === "success") {
+    if (redemptionResult.exhausted) {
+      const exhausted: true = redemptionResult.exhausted;
+      void exhausted;
+    } else {
+      const remaining: false = redemptionResult.exhausted;
+      void remaining;
+    }
+  } else if (redemptionResult.status === "verification_denied") {
+    const phase: "verification" = redemptionResult.phase;
+    void phase;
+  } else if (redemptionResult.status === "binding_denied") {
+    const phase: "binding" = redemptionResult.phase;
+    void phase;
+  } else if (redemptionResult.status === "consumption_denied") {
+    const phase: "consumption" = redemptionResult.phase;
+    const reason: access.AccessReceiptConsumptionDenialReason = redemptionResult.reason;
+    void phase;
+    void reason;
+  } else {
+    const phase: "system" = redemptionResult.phase;
+    void phase;
+  }
+
+  const redemptionOutcomes = [
+    { status: "success", exhausted: false },
+    { status: "success", exhausted: true },
+    { status: "verification_denied", phase: "verification" },
+    { status: "binding_denied", phase: "binding" },
+    { status: "consumption_denied", phase: "consumption", reason: "receipt_missing" },
+    { status: "system_failure", phase: "system" },
+  ] satisfies readonly access.AccessReceiptRedemptionResult[];
+  void redemptionOutcomes;
 };
 
 void run();
