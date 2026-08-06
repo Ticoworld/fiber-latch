@@ -36,7 +36,10 @@ the package boundary in a clean consumer.
 | D4 — signing and verification rules | IMPLEMENTED — INDEPENDENTLY REVIEWED |
 | D5 — Node package | IMPLEMENTED — INDEPENDENTLY REVIEWED |
 | D6 — paid-resource example | IMPLEMENTED — INDEPENDENTLY REVIEWED |
-| D7 — documentation and final report | IMPLEMENTED — PENDING FINAL GRANT REVIEW |
+| D7 — documentation and final report | VERIFIED COMPLETE |
+
+The complete delivery is ready for its public Nervos Talk completion report
+and reviewer assessment.
 
 Reviewer-first links:
 

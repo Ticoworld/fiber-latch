@@ -128,8 +128,17 @@ D6 paid-resource evidence:
 - package verification passed
 - packed paid-resource acceptance passed
 
-This checkpoint does not claim a D7 commit or D7 CI run. D7 remains pending
-final independent grant review.
+D7 final evidence:
+
+- commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3)
+- GitHub Actions run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459)
+- Node 22 passed
+- Node 24 passed
+- backend validation passed
+- access-package verification passed
+- paid-resource verification passed
+- 304 tests passed with zero skipped or todo tests
+- final independent grant-wide review: APPROVE
 
 ## 9. Expected Windows EBUSY handling
 
@@ -170,9 +179,7 @@ git diff --cached --name-status
 git ls-files --others --exclude-standard
 ~~~
 
-During this D7 checkpoint, the expected status is a set of unstaged
-documentation, root-script, and narrow packed-verification changes. The index
-must remain empty, and no tarball, temporary consumer, generated key or token,
+After the final evidence commit, the expected status is clean. The index must
+remain empty, and no tarball, temporary consumer, generated key or token,
 example-local lockfile, database file, private path, or unrelated repository
-file should appear. After the later final commit, the same checks should be
-clean.
+file should appear.

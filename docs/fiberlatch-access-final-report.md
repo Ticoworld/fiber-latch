@@ -12,9 +12,9 @@ checks host bindings, and orchestrates redemption through a host-owned atomic
 store. The paid-resource example demonstrates first-use success and replay
 denial from a server-owned payment fixture.
 
-The approved seven deliverables were produced, but D7 remains pending final
-independent review until this documentation checkpoint itself is approved.
-This report does not claim a D7 commit or D7 CI run.
+The approved seven deliverables were produced. D7 is verified complete based on
+the final evidence commit, successful Node 22/24 CI, and final independent
+grant-wide review approval.
 
 Grant facts: $3,000, six weeks, $0 hosting cost, and one solo developer. The
 package is private and unpublished; no hosted service was created.
@@ -68,7 +68,7 @@ SQLite, routes, or environment-loading behaviour.
 | D4 signing and verification | [fiberlatch-access-signing-verification.md](fiberlatch-access-signing-verification.md) | [9215d26](https://github.com/Ticoworld/fiber-latch/commit/9215d264bbd434a3f85df0b2bd836d5efada3b46) | Versioned rules; independent security/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | No formal security audit or remote key infrastructure is claimed |
 | D5 Node package | [packages/access](../packages/access), design doc | [8dadae6](https://github.com/Ticoworld/fiber-latch/commit/8dadae65319dd20cf57c67ab60801e11748293da) and [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e) | 235 package tests; build; publint; ATTW; packed ESM/CommonJS/TypeScript consumers; Node 22/24 run 31078601378; independent package/redemption reviews approved | VERIFIED COMPLETE | Private, unpublished, Node-only, and without a production database adapter |
 | D6 paid-resource example | [examples/paid-resource](../examples/paid-resource) | [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3) | 12 example tests; first-use/replay demo; packed acceptance; exactly-one-of-two single-process concurrency proof; Node 22/24 run 31093114518; independent focused integration review: APPROVE | VERIFIED COMPLETE | Fixture is not a Fiber payment; no durable multi-process store or hosted service |
-| D7 documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | No D7 commit yet | Uncommitted checkpoint artifacts; final local validation is recorded at review time | IMPLEMENTED — PENDING FINAL GRANT REVIEW | No D7 commit or CI is claimed until independent grant-wide review is complete |
+| D7 documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3) | `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459); Node 22 passed; Node 24 passed; backend validation, access-package verification, and paid-resource verification passed; 304 tests passed; zero skipped or todo tests; final independent grant-wide review: APPROVE | VERIFIED COMPLETE | Documentation-only evidence update; runtime and package limitations remain unchanged |
 
 ## 6. D1 scope and design
 
@@ -173,10 +173,14 @@ Artifacts: [fiberlatch-access-verification.md](fiberlatch-access-verification.md
 this report, [README.md](../README.md), [QUICKSTART.md](../QUICKSTART.md),
 [CHANGELOG.md](../CHANGELOG.md), [packages/access/README.md](../packages/access/README.md),
 and [examples/paid-resource/README.md](../examples/paid-resource/README.md).
-Evidence status: these are uncommitted checkpoint artifacts until the final
-independent grant-wide review is complete.
-Status: IMPLEMENTED — PENDING FINAL GRANT REVIEW.
-Limitation: no final D7 commit, push, or CI run is claimed in this checkpoint.
+Evidence: commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3),
+`access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459),
+Node 22 and Node 24 passed, and the final independent grant-wide review was
+APPROVE. The combined validation total was 304 passed tests with zero skipped
+or todo tests.
+Status: VERIFIED COMPLETE.
+Limitation: this evidence update changes documentation status only and does not
+alter runtime behaviour or package limitations.
 
 ## 13. Public API summary
 
@@ -308,9 +312,9 @@ authoritative store. A signed receipt alone is not replay protection.
 No feature or scope expansion was added. The delivery follows the proposal's
 seven deliverables and six-week structure, with hosting cost kept at $0.
 
-The proposal describes an open-source package, while this checkpoint keeps the
-package private and unpublished pending final review and any later publication
-decision. No npm registry publication is represented as evidence. The example
+The proposal describes an open-source package, while the package remains
+private and unpublished; any later publication decision is separate. No npm
+registry publication is represented as evidence. The example
 uses a clearly labelled server-owned fixture to prove the access pattern; it
 does not claim a new live Fiber payment and does not repeat the historical live
 proof as grant work.
@@ -361,6 +365,4 @@ it is outside this checkpoint.
 FiberLatch Access now has a reviewable package boundary, reproducible local
 packed-distribution proof, a focused paid-resource demonstration, explicit
 security and host-responsibility limits, and an evidence map for all seven
-approved deliverables. D1–D6 are verified complete in the committed history.
-D7 is implemented in this uncommitted checkpoint and remains pending one final
-independent grant-wide review.
+approved deliverables. D1–D7 are verified complete in the committed history.
