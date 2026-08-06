@@ -79,6 +79,9 @@ Start the example server in one terminal:
 node examples/paid-resource/src/server.mjs
 ```
 
+The server prints its actual listening URL and port on startup. Substitute
+that URL for `PORT` in the curl examples below.
+
 Request a receipt using the server-owned fixture:
 
 ```sh
@@ -106,6 +109,8 @@ receipt returns a generic `403` denial without the article.
 - Replace `DemoAccessReceiptStore` with a durable host-owned atomic store for
   production use. Its process-local memory disappears on restart and does not
   protect replay across multiple server processes.
+- Methods whose names end in `ForTest` are demonstration test affordances, not
+  a recommendation for a production store API.
 - The example's synchronous check-and-update transition proves the atomic
   semantic boundary only within one Node process. The concurrency test shows
   that two simultaneous single-use attempts produce one success and one denial.

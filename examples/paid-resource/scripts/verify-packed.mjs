@@ -26,7 +26,19 @@ function runProcess(command, args, cwd, stdio = "inherit") {
   }
 
   if (result.status !== 0) {
-    throw new Error(`Command failed: ${command} ${args.join(" ")}`);
+    const output = [
+      typeof result.stdout === "string" && result.stdout.trim()
+        ? `stdout:\n${result.stdout.trim()}`
+        : "",
+      typeof result.stderr === "string" && result.stderr.trim()
+        ? `stderr:\n${result.stderr.trim()}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    throw new Error(
+      `Command failed: ${command} ${args.join(" ")}${output ? `\n${output}` : ""}`,
+    );
   }
 
   return result.stdout ?? "";
@@ -81,11 +93,12 @@ function main() {
   runNpm(["run", "demo:access:example"], REPOSITORY_ROOT);
 
   const temporaryRoot = mkdtempSync(join(tmpdir(), "fiberlatch-paid-resource-"));
-  const packedDirectory = join(temporaryRoot, "packed");
-  const consumerDirectory = join(temporaryRoot, "consumer");
-  mkdirSync(packedDirectory);
 
   try {
+    const packedDirectory = join(temporaryRoot, "packed");
+    const consumerDirectory = join(temporaryRoot, "consumer");
+    mkdirSync(packedDirectory);
+
     const packOutput = runNpm(
       ["pack", "--json", "--pack-destination", packedDirectory],
       ACCESS_PACKAGE_ROOT,

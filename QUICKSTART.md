@@ -1,89 +1,129 @@
 # FiberLatch Quickstart
 
-FiberLatch is a backend-only service that turns a verified payment signal into a signed access receipt for a specific resource and subject.
+Use the first path to review the completed FiberLatch Access grant delivery.
+The historical backend path is kept separate so prior foundation is not
+mistaken for grant-funded package work.
 
-What this repo proves locally:
-- persisted access intents
-- signed JWT/JWS access receipts
-- JWKS publication
-- atomic redemption
-- fake Fiber-driven reconciliation
-- local end-to-end demo flow
+## 1. FiberLatch Access grant review path
 
-What this repo proves from a live Fiber testnet payment:
-- live paid Fiber payment_hash verified through Fiber v0.8.1 RPC
-- signed access receipt issued from a live paid signal
-- receipt verified, redeemed once, and rejected on second redemption
-- tagged at `fiberlatch-live-paid-proof`
+### Supported environment
 
-This is testnet-only proof. Production and mainnet readiness are not proven.
+- Node.js `>=22.12.0`
+- npm with workspace support
+- native ESM for the access package
+- supported CommonJS consumers through Node `require(esm)`
+- no browser runtime
 
-## Install
+From the repository root, run the clean-install acceptance:
 
-```bash
-npm install
+```sh
+npm ci
+npm run verify:access:grant
 ```
 
-## Env Setup
+`verify:access:grant` runs the backend Prisma generation, backend tests and
+build, package tests/build/distribution checks, and the paid-resource example
+including packed acceptance. It intentionally does not include `npm ci`; the
+clean installation remains an explicit reviewer step.
 
-Create a local `.env` from the example:
+Expected evidence from the current committed baseline:
 
-```bash
+- 235 `@fiberlatch/access` package tests
+- 57 historical backend tests
+- 12 paid-resource example tests
+- package build
+- `publint` package validation
+- ATTW type-entry validation
+- packed ESM consumer
+- packed CommonJS consumer
+- packed TypeScript consumer
+- packed paid-resource acceptance
+- first access succeeds
+- replay of the same receipt is denied
+
+The checks prove behaviour and distribution boundaries without promising any
+particular number of npm installation packages.
+
+### Focused commands
+
+```sh
+npm run test:access
+npm run verify:access:package
+npm run test:access:example
+npm run demo:access:example
+npm run verify:access:example
+```
+
+The package is private and unpublished. The distribution checks build and pack
+it locally, then exercise clean consumers from the generated tarball.
+
+The paid-resource example accepts a server-owned demonstration fixture. It is
+not a real Fiber payment and does not call Fiber RPC. Its automated flow issues
+one receipt, grants the first protected request, and denies replay.
+
+For the complete operational walkthrough, see
+[`docs/fiberlatch-access-verification.md`](docs/fiberlatch-access-verification.md).
+
+## 2. Historical FiberLatch backend path
+
+This path covers the existing Fastify/Prisma backend foundation. It is retained
+for context and regression evidence; it is not the grant package installation
+path.
+
+### Install and local environment
+
+```sh
+npm ci
+npm run prisma:generate
+```
+
+Create a local `.env` from the example and use the fake adapter for local work:
+
+```powershell
 Copy-Item .env.example .env
 ```
 
 Minimum local settings:
+
 - `DATABASE_URL=file:./dev.db`
 - `FIBER_CLIENT_MODE=fake`
 - `FIBER_NETWORK=testnet`
 
-If you want to review the live-test path later, also set:
-- `FIBER_RPC_URL`
-- `FIBER_RPC_AUTH_TOKEN` if your Fiber endpoint or proxy requires it
-- `FIBER_MANUAL_PAYMENT_HASH` for live verification by Fiber `payment_hash`
-- `FIBER_MANUAL_PAYMENT_REF` only as a legacy alias for the same `payment_hash`
+### Backend regression and demos
 
-## Test
-
-```bash
+```sh
 npm test
-```
-
-## Build
-
-```bash
 npm run build
-```
-
-## Local Demo
-
-```bash
 npm run demo:local-access
+npm run demo:protected-resource
 ```
 
-Expected demo summary:
-- one access intent is created locally
-- the reconciliation worker issues exactly one signed receipt
-- receipt verification succeeds
-- first redemption is granted
-- second redemption is denied
-- the stored receipt becomes exhausted after the first redemption
+The local demo creates an intent, issues a signed receipt, grants the first
+redemption, and denies the second. The fake Fiber adapter is only a local test
+fixture; it does not represent a real Fiber payment.
 
-## Live Fiber Proof
+### Historical live Fiber proof
 
-Live paid Fiber testnet verification is proven. See the tagged commit `fiberlatch-live-paid-proof`.
+The prior live proof is testnet-only historical evidence. It used a local
+Fiber v0.8.1 node, a funded testnet account, a ready channel, a real tiny
+testnet payment, and `payment_hash` verification through Fiber RPC.
 
-What was done:
-- local `fnn` v0.8.1 ran with a funded testnet account and a `ChannelReady` channel to public node1
-- a tiny testnet payment (1,000 shannons) was routed through public node1 to a public node2 invoice via trampoline
-- the node2 invoice reached `Paid`
-- `demo-live-paid-issuance.ts` ingested the paid `payment_hash`, created an `AccessIntent`, issued a signed `AccessReceipt`, verified it, and confirmed second redemption is denied
+To rerun that proof, a reviewer must provide a fresh, externally funded setup:
 
-To rerun a fresh live proof, you need:
-- a local `fnn` node with a funded testnet account
-- a live `ChannelReady` channel to public node1
-- a fresh node2 invoice paid via trampoline
-- `FIBER_CLIENT_MODE=real FIBER_NETWORK=testnet FIBER_RPC_URL=<node2 url> FIBER_MANUAL_PAYMENT_HASH=<paid hash> npm run demo:live-paid-issuance`
+- a local `fnn` v0.8.1 node with a funded testnet account
+- a live `ChannelReady` channel to a public node
+- a fresh public invoice that has actually been paid
+- `FIBER_CLIENT_MODE=real`
+- `FIBER_NETWORK=testnet`
+- `FIBER_RPC_URL=<node url>`
+- `FIBER_MANUAL_PAYMENT_HASH=<paid hash>`
 
-See:
-- [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
+Then run:
+
+```sh
+FIBER_CLIENT_MODE=real FIBER_NETWORK=testnet FIBER_RPC_URL=<node url> FIBER_MANUAL_PAYMENT_HASH=<paid hash> npm run demo:live-paid-issuance
+```
+
+See [`docs/live-fiber-verification-blocker.md`](docs/live-fiber-verification-blocker.md)
+for the historical proof boundary and remaining limits. Do not treat this
+backend proof as the paid-resource example's payment evidence.

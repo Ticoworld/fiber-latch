@@ -2,7 +2,7 @@
   "name": "@fiberlatch/access",
   "version": "0.0.0-development",
   "private": true,
-  "description": "FiberLatch Access reusable package under implementation.",
+  "description": "FiberLatch Access private reusable access-receipt package.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
