@@ -1,10 +1,19 @@
 # FiberLatch Access Final Delivery Report
 
+## Status notice - 9 August 2026
+
+This report was prepared early, ahead of the formal Weeks 5-6 closure. It is
+currently a draft/pre-final delivery report, not the final grant-completion
+submission. D1-D6 and the Weeks 3-4 implementation milestone are complete.
+D7 is IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING. Weeks 5-6 remain for
+external-developer usability, installability, documentation cleanup, final
+acceptance, and final verification.
+
 ## 1. Executive summary
 
-FiberLatch Access delivered the approved seven-part grant scope: four written
-specifications, a private reusable Node package, a paid-resource example, and
-reviewer documentation with an evidence ledger and final report.
+FiberLatch Access delivered the Weeks 1-4 implementation milestone: four
+written specifications, a private reusable Node package, a paid-resource
+example, and an early reviewer documentation and evidence baseline.
 
 The package is a focused access-control boundary after a host establishes
 payment trust. It constructs claims, signs and verifies Ed25519 receipts,
@@ -12,9 +21,11 @@ checks host bindings, and orchestrates redemption through a host-owned atomic
 store. The paid-resource example demonstrates first-use success and replay
 denial from a server-owned payment fixture.
 
-The approved seven deliverables were produced. D7 is verified complete based on
-the final evidence commit, successful Node 22/24 CI, and final independent
-grant-wide review approval.
+D1-D6 are verified complete based on their implementation evidence. D7 remains
+in progress: the current documentation, verification evidence, and report were
+prepared early and do not complete the remaining Weeks 5-6 external-developer
+usability, installability, documentation cleanup, final acceptance, and
+completion reporting.
 
 Grant facts: $3,000, six weeks, $0 hosting cost, and one solo developer. The
 package is private and unpublished; no hosted service was created.
@@ -56,7 +67,7 @@ SQLite, routes, or environment-loading behaviour.
 | Weeks 1–2 | Scope, receipt format, expiration/replay, signing/verification, package design, and ledger were specified. |
 | Weeks 3–4 | Package claim construction, signing, verification, binding evaluation, store contract, and redemption orchestration were implemented and tested. |
 | Weeks 3–4 / D6 | The paid-resource example and packed acceptance flow were added. |
-| Weeks 5–6 / D7 | Reviewer documentation, final report, cleanup, evidence ledger, and final verification checkpoint were prepared. |
+| Weeks 5–6 / D7 | Reviewer documentation, pre-final report, cleanup, evidence ledger, and an early verification checkpoint were prepared ahead of the remaining external-developer usability, installability, final acceptance, and completion reporting. |
 
 ## 5. Deliverable status table
 
@@ -68,7 +79,7 @@ SQLite, routes, or environment-loading behaviour.
 | D4 signing and verification | [fiberlatch-access-signing-verification.md](fiberlatch-access-signing-verification.md) | [9215d26](https://github.com/Ticoworld/fiber-latch/commit/9215d264bbd434a3f85df0b2bd836d5efada3b46) | Versioned rules; independent security/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | No formal security audit or remote key infrastructure is claimed |
 | D5 Node package | [packages/access](../packages/access), design doc | [8dadae6](https://github.com/Ticoworld/fiber-latch/commit/8dadae65319dd20cf57c67ab60801e11748293da) and [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e) | 235 package tests; build; publint; ATTW; packed ESM/CommonJS/TypeScript consumers; Node 22/24 run 31078601378; independent package/redemption reviews approved | VERIFIED COMPLETE | Private, unpublished, Node-only, and without a production database adapter |
 | D6 paid-resource example | [examples/paid-resource](../examples/paid-resource) | [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3) | 12 example tests; first-use/replay demo; packed acceptance; exactly-one-of-two single-process concurrency proof; Node 22/24 run 31093114518; independent focused integration review: APPROVE | VERIFIED COMPLETE | Fixture is not a Fiber payment; no durable multi-process store or hosted service |
-| D7 documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3) | `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459); Node 22 passed; Node 24 passed; backend validation, access-package verification, and paid-resource verification passed; 304 tests passed; zero skipped or todo tests; final independent grant-wide review: APPROVE | VERIFIED COMPLETE | Documentation-only evidence update; runtime and package limitations remain unchanged |
+| D7 documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3) | Early/pre-final evidence: `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459); Node 22 passed; Node 24 passed; backend validation, access-package verification, and paid-resource verification passed; 304 tests passed; zero skipped or todo tests; independent grant-wide review recorded as APPROVE for the pre-final baseline | IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING | Weeks 5-6 usability, installability, documentation cleanup, final acceptance, and completion reporting remain |
 
 ## 6. D1 scope and design
 
@@ -162,9 +173,10 @@ Limitations: the payment fixture is not a Fiber payment; the store is an
 in-memory demonstration, not durable multi-process replay protection; no
 hosted service or production payment integration is included.
 
-## 12. D7 documentation and final verification
+## 12. D7 documentation and pre-final verification
 
-This checkpoint adds the reviewer verification guide, this final report, root
+This early checkpoint adds the reviewer verification guide, this pre-final
+report, root
 README and quickstart separation, package and example documentation updates,
 changelog entry, ledger evidence, final acceptance script, and narrow packed
 verifier robustness cleanup.
@@ -175,12 +187,15 @@ this report, [README.md](../README.md), [QUICKSTART.md](../QUICKSTART.md),
 and [examples/paid-resource/README.md](../examples/paid-resource/README.md).
 Evidence: commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3),
 `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459),
-Node 22 and Node 24 passed, and the final independent grant-wide review was
-APPROVE. The combined validation total was 304 passed tests with zero skipped
-or todo tests.
-Status: VERIFIED COMPLETE.
-Limitation: this evidence update changes documentation status only and does not
-alter runtime behaviour or package limitations.
+Node 22 and Node 24 passed, and an independent grant-wide review was recorded
+as APPROVE for the pre-final baseline. The combined validation total
+was 304 passed tests with zero skipped or todo tests. These are valid early
+implementation and documentation evidence, not the final grant-completion
+submission. Status: IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING.
+Weeks 5-6 remain for external-developer usability, installability,
+documentation cleanup, final acceptance, and final verification. Limitation:
+this evidence update changes documentation status only and does not alter
+runtime behaviour or package limitations.
 
 ## 13. Public API summary
 
@@ -365,4 +380,6 @@ it is outside this checkpoint.
 FiberLatch Access now has a reviewable package boundary, reproducible local
 packed-distribution proof, a focused paid-resource demonstration, explicit
 security and host-responsibility limits, and an evidence map for all seven
-approved deliverables. D1–D7 are verified complete in the committed history.
+approved deliverables. D1-D6 are verified complete. D7 remains in progress
+pending Weeks 5-6 external-developer usability, installability, documentation
+cleanup, final acceptance, and final completion reporting.

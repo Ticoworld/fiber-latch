@@ -1,8 +1,11 @@
 # FiberLatch Quickstart
 
-Use the first path to review the completed FiberLatch Access grant delivery.
-The historical backend path is kept separate so prior foundation is not
-mistaken for grant-funded package work.
+Use the first path to review the completed Weeks 3-4 FiberLatch Access
+implementation milestone. It is the current verification baseline, not the
+completed six-week grant delivery. Weeks 5-6 remain for external-developer
+usability, installation verification, documentation cleanup, final acceptance,
+and the completion report. The historical backend path is kept separate so
+prior foundation is not mistaken for grant-funded package work.
 
 ## 1. FiberLatch Access grant review path
 
@@ -56,6 +59,10 @@ npm run verify:access:example
 
 The package is private and unpublished. The distribution checks build and pack
 it locally, then exercise clean consumers from the generated tarball.
+
+This acceptance command is useful evidence for the current implementation
+baseline. It does not constitute final Weeks 5-6 adoption/usability validation
+or final grant acceptance.
 
 The paid-resource example accepts a server-owned demonstration fixture. It is
 not a real Fiber payment and does not call Fiber RPC. Its automated flow issues

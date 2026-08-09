@@ -36,10 +36,12 @@ the package boundary in a clean consumer.
 | D4 — signing and verification rules | IMPLEMENTED — INDEPENDENTLY REVIEWED |
 | D5 — Node package | IMPLEMENTED — INDEPENDENTLY REVIEWED |
 | D6 — paid-resource example | IMPLEMENTED — INDEPENDENTLY REVIEWED |
-| D7 — documentation and final report | VERIFIED COMPLETE |
+| D7 — documentation and final report | IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING |
 
-The complete delivery is ready for its public Nervos Talk completion report
-and reviewer assessment.
+The Weeks 3-4 implementation milestone is complete. D1-D6, including the D5
+package and D6 paid-resource example, are complete. Weeks 5-6 remain for
+external-developer usability, installation verification, documentation
+cleanup, final acceptance, and the completion report.
 
 Reviewer-first links:
 

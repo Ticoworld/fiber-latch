@@ -3,10 +3,12 @@
 ## 1. Purpose
 
 This guide gives a reviewer a short, reproducible path through the completed
-FiberLatch Access grant delivery. It verifies the private package, its
-distribution boundary, the paid-resource example, and the historical backend
-regression without treating the backend or its live Fiber proof as grant-funded
-package implementation.
+Weeks 3-4 FiberLatch Access implementation milestone. It verifies the private
+package, its distribution boundary, the paid-resource example, and the
+historical backend regression without treating the backend or its live Fiber
+proof as grant-funded package implementation. It is the current pre-final
+baseline; Weeks 5-6 external-developer usability, installability,
+documentation cleanup, and final grant acceptance remain pending.
 
 ## 2. Supported environment
 
@@ -128,7 +130,7 @@ D6 paid-resource evidence:
 - package verification passed
 - packed paid-resource acceptance passed
 
-D7 final evidence:
+D7 pre-final evidence prepared early:
 
 - commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3)
 - GitHub Actions run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459)
@@ -138,7 +140,11 @@ D7 final evidence:
 - access-package verification passed
 - paid-resource verification passed
 - 304 tests passed with zero skipped or todo tests
-- final independent grant-wide review: APPROVE
+- independent grant-wide review recorded as APPROVE for the pre-final baseline
+
+These are valid early implementation and documentation evidence, not the final
+grant-completion submission. Weeks 5-6 usability, installability, cleanup, and
+final verification remain.
 
 ## 9. Expected Windows EBUSY handling
 
