@@ -19,7 +19,7 @@ npm ci
 npm run verify:access:grant
 ```
 
-This verifies the backend regression and build, the release-prepared
+This verifies the backend regression and build, the published
 `@fiberlatch/access` package, its packed consumers, and the paid-resource
 example. It builds and packs the package locally so verification can cross the
 package boundary in a clean consumer.
@@ -29,7 +29,7 @@ package boundary in a clean consumer.
 | Layer | Contents | Status and boundary |
 | --- | --- | --- |
 | Historical FiberLatch backend foundation | Existing Fastify/Prisma backend, prior backend routes and demos, and the prior live paid Fiber testnet proof | Prior work; not funded again by this grant |
-| FiberLatch Access grant delivery | Reusable Node package at [`packages/access`](packages/access), package-root API, paid-resource example at [`examples/paid-resource`](examples/paid-resource), specifications under [`docs`](docs), and reviewer evidence | Grant-funded access-control layer; prepared for public npm distribution with repository-based reviewer verification |
+| FiberLatch Access grant delivery | Reusable Node package at [`packages/access`](packages/access), package-root API, paid-resource example at [`examples/paid-resource`](examples/paid-resource), specifications under [`docs`](docs), and reviewer evidence | Grant-funded access-control layer; `@fiberlatch/access@0.1.0` is publicly distributed through npm, with repository-based reviewer verification |
 
 ### Current grant status
 
@@ -68,7 +68,7 @@ bindings, and orchestrates redemption through a host-owned atomic store.
 
 The grant package has these deliberate limits:
 
-- Its intended adopter path is npm; source and reviewer checks use the
+- Its adopter path is npm; source and reviewer checks use the
   repository-built tarball.
 - It requires Node `>=22.12.0`.
 - It is native ESM; supported CommonJS use relies on Node `require(esm)`.

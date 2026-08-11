@@ -27,9 +27,9 @@ separate.
   require(esm)
 - no browser runtime
 
-The package is prepared for the intended `0.1.0` public npm release.
-Verification deliberately packs it locally and uses the generated tarball in a
-clean consumer.
+`@fiberlatch/access@0.1.0` is publicly available from npm. Verification
+deliberately packs it locally and uses the generated tarball in a clean
+consumer so reviewers can reproduce the package boundary independently.
 
 ## 3. Clean-install acceptance
 

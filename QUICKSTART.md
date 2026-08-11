@@ -57,8 +57,8 @@ npm run demo:access:example
 npm run verify:access:example
 ```
 
-The package is prepared for the intended `0.1.0` public npm release. This
-reviewer path still builds and packs it locally, then exercises clean
+`@fiberlatch/access@0.1.0` is publicly available from npm. This reviewer path
+still builds and packs it locally, then exercises clean
 consumers from the generated tarball. For external developer installation and
 package-root usage, use the
 [`packages/access/README.md`](packages/access/README.md) adoption guide

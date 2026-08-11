@@ -16,9 +16,8 @@ to serve a resource.
 
 - The repository is public and the source and package are open-source under
   ISC.
-- The `0.1.0` release is prepared for public distribution through npm.
-- Once that release is published, the normal adopter path is
-  `npm install @fiberlatch/access`.
+- The published `0.1.0` release is publicly available through npm.
+- The normal adopter path is `npm install @fiberlatch/access`.
 - Minimum Node.js version: `>=22.12.0`.
 - The package is native ESM.
 - Supported CommonJS use relies on Node's `require(esm)` behavior.
@@ -27,20 +26,20 @@ to serve a resource.
 
 ## Install from npm
 
-For the `0.1.0` public release, install the package from npm:
+Install the published `0.1.0` package from npm:
 
 ~~~sh
 npm install @fiberlatch/access
 ~~~
 
-This is the normal external-adopter path once the release is published. The
+This is the normal external-adopter path. The
 consumer resolves `@fiberlatch/access` from its own `node_modules`; no
 workspace linking or source import is required.
 
 ## Build and install from source
 
 Use this secondary path for source review, contributor work, reproducing the
-packaged artifact, and local pre-publication verification.
+packaged artifact, and local package-artifact verification.
 
 Run these commands from a fresh public checkout:
 
@@ -52,7 +51,7 @@ npm run build:access
 npm pack --workspace @fiberlatch/access
 ~~~
 
-With the release-preparation manifest, npm reports
+With the `0.1.0` manifest, npm reports
 `fiberlatch-access-0.1.0.tgz` and writes that tarball to the current working
 directory, which is the repository root in the commands above. The package
 inside the artifact is `@fiberlatch/access@0.1.0`.
