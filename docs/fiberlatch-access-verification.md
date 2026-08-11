@@ -3,10 +3,10 @@
 ## 1. Purpose
 
 This guide gives a reviewer a short, reproducible path through the completed
-Weeks 3-4 FiberLatch Access implementation milestone. It verifies the private
-package, its distribution boundary, the paid-resource example, and the
-historical backend regression without treating the backend or its live Fiber
-proof as grant-funded package implementation. It is the current pre-final
+Weeks 3-4 FiberLatch Access implementation milestone. It verifies the
+unpublished package, its distribution boundary, the paid-resource example, and
+the historical backend regression without treating the backend or its live
+Fiber proof as grant-funded package implementation. It is the current pre-final
 baseline; Weeks 5-6 external-developer usability, installability,
 documentation cleanup, and final grant acceptance remain pending.
 
@@ -21,8 +21,8 @@ documentation cleanup, and final grant acceptance remain pending.
   require(esm)
 - no browser runtime
 
-The package is private and unpublished. Verification packs it locally and uses
-the generated tarball in a clean consumer.
+The package is unpublished and repository-distributed. Verification packs it
+locally and uses the generated tarball in a clean consumer.
 
 ## 3. Clean-install acceptance
 

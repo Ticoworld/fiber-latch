@@ -2,7 +2,8 @@
   "name": "@fiberlatch/access",
   "version": "0.0.0-development",
   "private": true,
-  "description": "FiberLatch Access private reusable access-receipt package.",
+  "description": "FiberLatch Access unpublished reusable access-receipt package.",
+  "license": "ISC",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,7 +22,8 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",

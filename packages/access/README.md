@@ -1,13 +1,12 @@
 # FiberLatch Access
 
-FiberLatch Access is the private, unpublished Node package delivered for the
-FiberLatch Access grant. It provides a small package-root API for constructing,
-signing, verifying, binding, and redeeming access receipts after a host has
-established payment trust.
+FiberLatch Access is the unpublished Node package delivered for the FiberLatch
+Access grant. It provides a small package-root API for constructing, signing,
+verifying, binding, and redeeming access receipts after a host has established
+payment trust.
 
-The grant implementation exists, but the package remains private and has not
-been published to npm. It is built and packed locally for clean-consumer
-verification.
+The grant implementation exists, but the package is not currently published to
+npm. It is built and packed locally for clean-consumer verification.
 
 ## Runtime API
 
@@ -39,6 +38,7 @@ the host remains responsible for the final protected-resource decision.
 - Supported CommonJS use relies on Node's `require(esm)` behaviour.
 - Browser support is not included.
 - `private: true` prevents accidental npm publication.
+- The source and packed tarball are licensed under ISC.
 - The package can be packed locally, but no npm registry publication is
   claimed.
 - Process-local memory is suitable for demonstrations only; it is not

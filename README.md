@@ -14,17 +14,17 @@ npm ci
 npm run verify:access:grant
 ```
 
-This verifies the backend regression and build, the private `@fiberlatch/access`
-package, its packed consumers, and the paid-resource example. The package is
-not published to npm. It is built and packed locally so verification can cross
-the package boundary in a clean consumer.
+This verifies the backend regression and build, the unpublished
+`@fiberlatch/access` package, its packed consumers, and the paid-resource
+example. The package is not published to npm. It is built and packed locally
+so verification can cross the package boundary in a clean consumer.
 
 ### Repository structure
 
 | Layer | Contents | Status and boundary |
 | --- | --- | --- |
 | Historical FiberLatch backend foundation | Existing Fastify/Prisma backend, prior backend routes and demos, and the prior live paid Fiber testnet proof | Prior work; not funded again by this grant |
-| FiberLatch Access grant delivery | Reusable Node package at [`packages/access`](packages/access), package-root API, paid-resource example at [`examples/paid-resource`](examples/paid-resource), specifications under [`docs`](docs), and reviewer evidence | Grant-funded access-control layer; private and unpublished |
+| FiberLatch Access grant delivery | Reusable Node package at [`packages/access`](packages/access), package-root API, paid-resource example at [`examples/paid-resource`](examples/paid-resource), specifications under [`docs`](docs), and reviewer evidence | Grant-funded access-control layer; unpublished and repository-distributed |
 
 ### Current grant status
 
@@ -62,7 +62,7 @@ bindings, and orchestrates redemption through a host-owned atomic store.
 
 The grant package has these deliberate limits:
 
-- It is private and has not been published to npm.
+- It is unpublished and has not been published to npm.
 - It requires Node `>=22.12.0`.
 - It is native ESM; supported CommonJS use relies on Node `require(esm)`.
 - It has no browser support.
