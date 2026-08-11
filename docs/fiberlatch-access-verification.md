@@ -3,12 +3,18 @@
 ## 1. Purpose
 
 This guide gives a reviewer a short, reproducible path through the completed
-Weeks 3-4 FiberLatch Access implementation milestone. It verifies the
-unpublished package, its distribution boundary, the paid-resource example, and
-the historical backend regression without treating the backend or its live
-Fiber proof as grant-funded package implementation. It is the current pre-final
-baseline; Weeks 5-6 external-developer usability, installability,
-documentation cleanup, and final grant acceptance remain pending.
+Weeks 3-4 FiberLatch Access implementation milestone. It verifies the package,
+its distribution boundary, the paid-resource example, and the historical
+backend regression without treating the backend or its live Fiber proof as
+grant-funded package implementation. It is the current pre-final baseline;
+Weeks 5-6 external-developer usability, installability, documentation cleanup,
+and final grant acceptance remain pending.
+
+This is the reviewer acceptance path. External developers should use the
+[`packages/access/README.md`](../packages/access/README.md) adoption guide
+for the npm-primary installation path, secondary repository-to-tarball commands,
+and package-root usage. This document keeps the broader reviewer checks
+separate.
 
 ## 2. Supported environment
 
@@ -21,8 +27,9 @@ documentation cleanup, and final grant acceptance remain pending.
   require(esm)
 - no browser runtime
 
-The package is unpublished and repository-distributed. Verification packs it
-locally and uses the generated tarball in a clean consumer.
+The package is prepared for the intended `0.1.0` public npm release.
+Verification deliberately packs it locally and uses the generated tarball in a
+clean consumer.
 
 ## 3. Clean-install acceptance
 
@@ -110,7 +117,8 @@ The paid-resource verifier performs these boundary checks:
 8. Remove the temporary root in finally.
 
 The package distribution fixtures separately cover ESM, CommonJS, and
-TypeScript package-root consumers. No npm registry publication is involved.
+TypeScript package-root consumers. This reviewer path uses the local tarball
+and does not depend on registry publication.
 
 ## 8. Node 22 and Node 24 CI evidence
 

@@ -1,9 +1,27 @@
 {
   "name": "@fiberlatch/access",
-  "version": "0.0.0-development",
-  "private": true,
-  "description": "FiberLatch Access unpublished reusable access-receipt package.",
+  "version": "0.1.0",
+  "description": "FiberLatch Access package for signing, verifying, binding, and redeeming host-issued access receipts.",
   "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ticoworld/fiber-latch.git",
+    "directory": "packages/access"
+  },
+  "homepage": "https://github.com/Ticoworld/fiber-latch#readme",
+  "bugs": {
+    "url": "https://github.com/Ticoworld/fiber-latch/issues"
+  },
+  "keywords": [
+    "fiber",
+    "access-control",
+    "access-receipt",
+    "nodejs",
+    "authorization"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

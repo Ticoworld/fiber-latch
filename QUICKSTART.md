@@ -57,8 +57,12 @@ npm run demo:access:example
 npm run verify:access:example
 ```
 
-The package is private and unpublished. The distribution checks build and pack
-it locally, then exercise clean consumers from the generated tarball.
+The package is prepared for the intended `0.1.0` public npm release. This
+reviewer path still builds and packs it locally, then exercises clean
+consumers from the generated tarball. For external developer installation and
+package-root usage, use the
+[`packages/access/README.md`](packages/access/README.md) adoption guide
+instead of this reviewer-first path.
 
 This acceptance command is useful evidence for the current implementation
 baseline. It does not constitute final Weeks 5-6 adoption/usability validation

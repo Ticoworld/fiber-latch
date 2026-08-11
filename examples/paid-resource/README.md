@@ -1,7 +1,8 @@
 # FiberLatch Access paid-resource example
 
-This small native-HTTP example shows how a host application can use the
-committed `@fiberlatch/access` package boundary for one paid resource:
+This complete runnable native-HTTP integration example shows how a host
+application can use the committed `@fiberlatch/access` package boundary for
+one paid resource:
 
 1. the host accepts a server-owned, already-verified payment fixture
 2. the host constructs trusted single-use receipt claims
@@ -14,6 +15,13 @@ committed `@fiberlatch/access` package boundary for one paid resource:
 
 The example is deliberately small and uses only Node's built-in modules plus
 the workspace `@fiberlatch/access` package.
+
+For the supported external package installation path and a minimal
+package-root API walkthrough, see
+[`packages/access/README.md`](../../packages/access/README.md). This example
+is the full executable learning path, including the host-owned payment
+fixture, redemption store, protected-resource boundary, replay denial, and
+single-process concurrency proof.
 
 ## What this does not demonstrate
 

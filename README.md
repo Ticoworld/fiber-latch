@@ -4,6 +4,11 @@ FiberLatch is a backend-only reference project for turning a trusted payment
 result into access to a protected resource. The repository now contains two
 deliberately separate layers.
 
+External developers adopting `@fiberlatch/access` should start with the
+[canonical package adoption guide](packages/access/README.md). It documents
+the npm-primary installation path, the secondary source/tarball path, and the
+package-root usage flow.
+
 ## Start with the grant review path
 
 The reviewer-first entry point is [`QUICKSTART.md`](QUICKSTART.md). The
@@ -14,17 +19,17 @@ npm ci
 npm run verify:access:grant
 ```
 
-This verifies the backend regression and build, the unpublished
+This verifies the backend regression and build, the release-prepared
 `@fiberlatch/access` package, its packed consumers, and the paid-resource
-example. The package is not published to npm. It is built and packed locally
-so verification can cross the package boundary in a clean consumer.
+example. It builds and packs the package locally so verification can cross the
+package boundary in a clean consumer.
 
 ### Repository structure
 
 | Layer | Contents | Status and boundary |
 | --- | --- | --- |
 | Historical FiberLatch backend foundation | Existing Fastify/Prisma backend, prior backend routes and demos, and the prior live paid Fiber testnet proof | Prior work; not funded again by this grant |
-| FiberLatch Access grant delivery | Reusable Node package at [`packages/access`](packages/access), package-root API, paid-resource example at [`examples/paid-resource`](examples/paid-resource), specifications under [`docs`](docs), and reviewer evidence | Grant-funded access-control layer; unpublished and repository-distributed |
+| FiberLatch Access grant delivery | Reusable Node package at [`packages/access`](packages/access), package-root API, paid-resource example at [`examples/paid-resource`](examples/paid-resource), specifications under [`docs`](docs), and reviewer evidence | Grant-funded access-control layer; prepared for public npm distribution with repository-based reviewer verification |
 
 ### Current grant status
 
@@ -51,6 +56,7 @@ Reviewer-first links:
 - [`examples/paid-resource/README.md`](examples/paid-resource/README.md)
 - [`docs/fiberlatch-access-grant-ledger.md`](docs/fiberlatch-access-grant-ledger.md)
 - [Approved proposal](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414)
+- [Weeks 3-4 public update](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414/5?u=ticoworld)
 - [Weeks 1–2 public update](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414/4?u=ticoworld)
 
 ## FiberLatch Access grant delivery
@@ -62,7 +68,8 @@ bindings, and orchestrates redemption through a host-owned atomic store.
 
 The grant package has these deliberate limits:
 
-- It is unpublished and has not been published to npm.
+- Its intended adopter path is npm; source and reviewer checks use the
+  repository-built tarball.
 - It requires Node `>=22.12.0`.
 - It is native ESM; supported CommonJS use relies on Node `require(esm)`.
 - It has no browser support.
