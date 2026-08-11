@@ -1,6 +1,7 @@
 {
   "name": "fiber-latch",
   "version": "1.0.0",
+  "private": true,
   "description": "Backend-only service that turns verified Fiber payments into signed access receipts.",
   "main": "dist/server.js",
   "scripts": {
