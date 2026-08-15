@@ -2,8 +2,8 @@
 
 ## 1. Purpose
 
-This guide gives a reviewer a short, reproducible path through the completed
-Weeks 3-4 FiberLatch Access implementation milestone. It verifies the package,
+This guide gives a reviewer a short, reproducible path through the FiberLatch
+Access implementation baseline. It verifies the package,
 its distribution boundary, the paid-resource example, and the historical
 backend regression without treating the backend or its live Fiber proof as
 grant-funded package implementation. It is the current pre-final baseline;
@@ -90,7 +90,7 @@ npm run demo:access:example
 npm run verify:access:example
 ~~~
 
-The example's server-owned fixture is deliberately not a real Fiber payment.
+The example's server-side fixture is deliberately not a real Fiber payment.
 The automated flow accepts the fixture, issues a receipt, grants the first
 protected request, and denies the second use. It does not call Fiber RPC.
 
@@ -122,14 +122,14 @@ and does not depend on registry publication.
 
 ## 8. Node 22 and Node 24 CI evidence
 
-D5 package distribution evidence:
+Node package distribution evidence:
 
 - commit [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e)
 - GitHub Actions run [31078601378](https://github.com/Ticoworld/fiber-latch/actions/runs/31078601378)
 - Node 22 passed
 - Node 24 passed
 
-D6 paid-resource evidence:
+Paid-resource example evidence:
 
 - commit [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3)
 - GitHub Actions run [31093114518](https://github.com/Ticoworld/fiber-latch/actions/runs/31093114518)
@@ -138,7 +138,7 @@ D6 paid-resource evidence:
 - package verification passed
 - packed paid-resource acceptance passed
 
-D7 pre-final evidence prepared early:
+Documentation and final-report pre-final evidence prepared early:
 
 - commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3)
 - GitHub Actions run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459)

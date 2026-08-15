@@ -1,14 +1,13 @@
 # FiberLatch
 
-FiberLatch is a Node.js access-receipt project for the boundary after a host
-application has already established payment or business trust. Its reusable
-package, `@fiberlatch/access`, signs and verifies receipts, checks them against
-trusted host context, and coordinates one redemption through host-owned
-storage.
+FiberLatch helps a Node.js app turn a trusted payment or permission decision
+into a signed receipt for limited access to a protected resource. Its reusable
+package, `@fiberlatch/access`, creates and checks receipts while your app keeps
+control of payment trust, storage, and the final decision to serve the
+resource.
 
-It is useful when a service needs to turn an already-trusted entitlement into
-bounded access to a protected resource without coupling the access boundary to
-a web framework, payment SDK, or database.
+FiberLatch does not verify that a payment happened. Your app makes that
+decision first, then uses FiberLatch to issue and safely check access later.
 
 ## Install
 
@@ -20,22 +19,38 @@ The package supports Node.js `>=22.12.0`. It is native ESM, with supported
 CommonJS package-root usage through Node's `require(esm)` behavior. There is no
 browser runtime.
 
+## Why use FiberLatch?
+
+Use FiberLatch when your app needs to give limited access after it has already
+trusted a payment or another business decision, such as:
+
+- a paid API or private service
+- a paid article, file, or download
+- access to a course or module
+- one-time or limited-use access
+
+It handles the signed receipt, checks that the receipt matches the expected
+user and resource, returns clear allow-or-deny results, and gives your app a
+safe store boundary for recording use. Your app still owns payment
+verification, trusted storage, revocation, and the final serve-or-deny
+decision.
+
 ## 60-second model
 
 ```text
-trusted host payment/business decision
+your app decides access should be granted
             |
             v
-build canonical claims -> sign access receipt
+create and sign receipt
             |
             v
-client presents bearer receipt
+client presents receipt later
             |
             v
-verify -> bind to trusted context -> atomically redeem
+check receipt and expected user/resource/rules
             |
             v
-host serves or denies the protected resource
+your app records one use safely, then serves or denies the resource
 ```
 
 FiberLatch Access does not decide whether payment happened. The host makes
@@ -54,20 +69,20 @@ import {
 } from "@fiberlatch/access";
 ```
 
-The normal flow is to build canonical claims after the host trusts an
-entitlement, sign them with a trusted Ed25519 key, then redeem the bearer
-receipt against trusted request context and an authoritative host store.
+The normal flow is to build receipt claims after your app trusts a payment or
+permission decision, sign them with a trusted Ed25519 key, then check the
+receipt against trusted request context and record its use in your app's store.
 
 See the [FiberLatch Access package guide](packages/access/README.md) for the
 complete issuance, redemption, error, store, and CommonJS documentation.
 
 ## What FiberLatch Access provides
 
-- Canonical access-receipt claim validation
+- Access-receipt claim validation
 - Ed25519 receipt signing and verification
-- Binding evaluation against trusted subject, resource, policy, and intent
-  context
-- Redemption orchestration through a host-owned atomic `AccessReceiptStore`
+- Checks that a receipt matches the trusted subject, resource, policy, and
+  intent context
+- Safe use recording through your app's atomic `AccessReceiptStore`
 - Typed success, denial, and fail-closed system results
 
 ## Responsibility boundary
@@ -77,25 +92,25 @@ business and persistence decisions.
 
 | FiberLatch Access | Host application |
 | --- | --- |
-| Claim validation | Payment or business verification |
+| Receipt claim validation | Payment or business verification |
 | Ed25519 signing and verification | Subject and identity decisions |
-| Trusted binding evaluation | Resource, policy, and intent meaning |
-| Redemption orchestration | Trusted key configuration |
-| Store command/result boundary | Persistence, revocation, and authoritative counts |
+| Receipt matching against trusted context | Resource, policy, and intent meaning |
+| Redemption result boundary | Trusted key configuration |
+| Store command/result boundary | Storage, revocation, and redemption counts |
 | Fail-closed redemption result mapping | Final resource access decision |
 
-`payment_ref` is correlation metadata, not payment proof. The package does not
-perform payment verification, call Fiber RPC during normal verification or
-redemption, persist receipts, revoke receipts, or ship a production database
-adapter.
+`payment_ref` is a reference that can link a receipt to a payment record, not
+payment proof. The package does not perform payment verification, call Fiber
+RPC during normal verification or redemption, persist receipts, revoke
+receipts, or ship a production database adapter.
 
 ## Runnable example
 
 The [paid-resource example](examples/paid-resource) is the complete executable
-integration path. It demonstrates a host-owned trusted payment fixture,
-receipt issuance, a protected-resource request, first-use success, replay
-denial, and the single-process atomic consume semantics of its demonstration
-store.
+integration path. It demonstrates server-side demo data for a payment the app
+already trusts, receipt issuance, a protected-resource request, first-use
+success, replay denial, and the single-process atomic consume behavior of its
+demonstration store.
 
 The example is intentionally honest: its payment fixture is not a real Fiber
 payment, and its in-memory store is not distributed replay protection.
@@ -135,11 +150,10 @@ integration example under `examples/paid-resource`.
 Report product bugs or documentation issues through
 [GitHub Issues](https://github.com/Ticoworld/fiber-latch/issues).
 
-## Project records
+## Project history
 
-Grant and implementation records remain available for readers who need the
-project history or delivery evidence. They are not required to install or use
-the package.
+Project and delivery records are available for reviewers and contributors.
+They are not required to install or use the package.
 
 - [Approved proposal](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414)
 - [Weeks 1-2 public update](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414/4?u=ticoworld)
@@ -148,9 +162,6 @@ the package.
 - [Final/pre-final delivery report](docs/fiberlatch-access-final-report.md)
 - [Grant ledger](docs/fiberlatch-access-grant-ledger.md)
 - [Access specifications](docs/fiberlatch-access-scope.md)
-
-D1-D6 remain recorded as VERIFIED COMPLETE. D7 remains IN PROGRESS - FINAL
-WEEKS 5-6 VERIFICATION PENDING.
 
 ## License
 

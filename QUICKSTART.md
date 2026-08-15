@@ -1,13 +1,12 @@
 # FiberLatch Quickstart
 
-Use the first path to review the completed Weeks 3-4 FiberLatch Access
-implementation milestone. It is the current verification baseline, not the
-completed six-week grant delivery. Weeks 5-6 remain for external-developer
-usability, installation verification, documentation cleanup, final acceptance,
-and the completion report. The historical backend path is kept separate so
-prior foundation is not mistaken for grant-funded package work.
+Use the first path to review the FiberLatch Access implementation baseline. It
+is not the final grant-completion record. External-developer usability,
+installation verification, documentation cleanup, final acceptance, and the
+completion report remain separate reviewer work. The historical backend path is
+kept separate from the reusable package path.
 
-## 1. FiberLatch Access grant review path
+## 1. FiberLatch Access review path
 
 ### Supported environment
 
@@ -65,10 +64,10 @@ package-root usage, use the
 instead of this reviewer-first path.
 
 This acceptance command is useful evidence for the current implementation
-baseline. It does not constitute final Weeks 5-6 adoption/usability validation
-or final grant acceptance.
+baseline. It does not constitute final adoption/usability validation or final
+grant acceptance.
 
-The paid-resource example accepts a server-owned demonstration fixture. It is
+The paid-resource example accepts a server-side demonstration fixture. It is
 not a real Fiber payment and does not call Fiber RPC. Its automated flow issues
 one receipt, grants the first protected request, and denies replay.
 

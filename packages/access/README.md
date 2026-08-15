@@ -3,10 +3,10 @@
 FiberLatch Access is a small, framework-independent Node.js package for
 access receipts after a host application has already established payment or
 business trust. It validates claims, signs and verifies Ed25519 receipts,
-checks trusted host bindings, and orchestrates one redemption through a
-host-owned store.
+checks that they match the expected user and resource, and uses your app's
+store to record and limit receipt use safely.
 
-It does not determine whether a payment happened. The host establishes payment
+It does not determine whether a payment happened. Your app establishes payment
 trust before issuance and makes the final decision about serving a resource.
 
 ## Install
@@ -27,28 +27,29 @@ Runtime requirements:
 
 ## 60-second mental model
 
-FiberLatch Access has two moments. Issuance happens only after the host trusts
-its payment or business decision. Access happens later when the host receives
-the bearer receipt and checks it against trusted request context.
+FiberLatch Access has two moments. Issuance happens only after your app trusts
+its payment or business decision. Access happens later when your app receives
+the receipt and checks it against trusted request context.
 
 ~~~text
-trusted host payment/business decision
+your app trusts a payment or permission decision
             |
             v
-build canonical claims -> sign receipt
+create and sign receipt
             |
             v
-client presents bearer receipt
+client presents receipt later
             |
             v
-verify -> evaluate trusted bindings -> atomically consume in host store
+check receipt and expected user/resource/rules
             |
             v
-host serves or denies the protected resource
+record one use safely in your app's store -> serve or deny
 ~~~
 
-The signed receipt is not payment proof. `payment_ref` is correlation metadata,
-not payment proof, and `jti` alone does not prevent replay.
+The signed receipt is not payment proof. `payment_ref` is a reference that can
+link the receipt to a payment record, not payment proof. `jti` alone does not
+prevent replay.
 
 ## Quick start (ESM)
 
@@ -125,7 +126,7 @@ const expected = {
   intent_id: "intent-42",
 };
 
-// Demo-only memory. A real host must use authoritative atomic persistence.
+// Demo-only memory. A real host must use trusted atomic storage.
 const consumedJtis = new Set();
 const store = {
   async consume(command) {
@@ -157,7 +158,7 @@ console.log({ first, replay });
 // replay: { status: "consumption_denied", phase: "consumption", reason: "receipt_exhausted" }
 ~~~
 
-The example's expected bindings are trusted host context. Do not derive them
+The example's expected bindings are trusted application context. Do not derive them
 from the untrusted bearer receipt. The [paid-resource example](https://github.com/Ticoworld/fiber-latch/blob/master/examples/paid-resource/README.md)
 contains the complete demonstration store, HTTP boundary, concurrency
 behavior, and tests.
@@ -172,7 +173,7 @@ exports the type-only contracts listed below.
 | `buildAccessReceiptClaims(input)` | Validates and returns canonical claims for issuance. | Synchronous; throws `AccessReceiptValidationError` for malformed or inconsistent claims. |
 | `createAccessReceiptSigner({ privateKey })` | Imports trusted Ed25519 private-key configuration and creates a signer. | Async; rejects with `AccessReceiptConfigurationError` for invalid configuration. The returned signer is async and can reject `AccessReceiptValidationError` for invalid claims. |
 | `createAccessReceiptVerifier({ publicKeys, issuer, audience, ... })` | Imports trusted Ed25519 public keys and configures verification. | Async; rejects with `AccessReceiptConfigurationError` for invalid configuration. |
-| `evaluateAccessReceiptBindings(claims, expected)` | Compares verified claims with trusted subject, resource, policy, intent, and optional redemption limit. | Synchronous; returns `matched` or `binding_denied`. |
+| `evaluateAccessReceiptBindings(claims, expected)` | Checks verified claims against the expected subject, resource, policy, intent, and optional redemption limit. | Synchronous; returns `matched` or `binding_denied`. |
 | `redeemAccessReceipt(input)` | Verifies a bearer receipt, evaluates bindings, and calls the host store's atomic `consume`. | Async; returns a typed result rather than throwing for normal denial or store failure. |
 
 The verifier configuration requires a non-empty `publicKeys` array, `issuer`,
@@ -207,12 +208,12 @@ The host:
 1. receives a bearer receipt
 2. creates or reuses a verifier with trusted configuration
 3. defines expected bindings from trusted request and application context
-4. supplies its authoritative `AccessReceiptStore`
+4. supplies its `AccessReceiptStore` implementation
 5. calls `redeemAccessReceipt`
 6. makes the final serve-or-deny decision
 
 After the verifier returns `verifiedClaims`, a direct binding check uses trusted
-context rather than receipt fields:
+application context rather than receipt fields:
 
 ~~~js
 const binding = evaluateAccessReceiptBindings(verifiedClaims, {
@@ -243,15 +244,15 @@ if (binding.status !== "matched") {
 | `intent_id` | non-empty string | Host-defined access intent identifier. |
 | `resource_id` | non-empty string | Host-defined protected resource identifier. |
 | `policy_id` | non-empty string | Host-defined policy identifier. |
-| `payment_ref` | string or `null` | Required correlation metadata; never payment proof. |
+| `payment_ref` | string or `null` | Reference linking the receipt to a host payment record; never payment proof. |
 | `grant_type` | `single_redemption` or `multi_redemption` | Declares the redemption model. |
-| `max_redemptions` | positive integer | Authoritative maximum redemption count. |
+| `max_redemptions` | positive integer | Maximum number of uses set by the host. |
 
 The claim builder enforces `iat <= nbf < exp`. It also enforces
 `single_redemption` with `max_redemptions: 1` and `multi_redemption` with a
 value greater than `1`. It validates claim structure and relationships; the
 verifier and host store perform time and redemption decisions against their
-trusted execution context.
+trusted application context.
 
 ## Handling redemption results
 
@@ -260,7 +261,7 @@ are results, not application crashes:
 
 | Status | Meaning and normal host action |
 | --- | --- |
-| `success` | The store consumed access and returns `exhausted: boolean`; the host may still apply its final resource decision. |
+| `success` | The store recorded one use and returns `exhausted: boolean`; the host may still apply its final resource decision. |
 | `verification_denied` | The receipt was not trusted, for example because it was malformed, expired, or had an invalid signature, issuer, or audience. Deny access. |
 | `binding_denied` | Verified claims do not match the host's expected subject, resource, policy, intent, or limit. Deny access. |
 | `consumption_denied` | The host store denied consumption. Deny access and inspect the typed reason internally if needed. |
@@ -296,12 +297,12 @@ Do not expose cryptographic, store, or internal verification details.
 
 | Reason | Meaning |
 | --- | --- |
-| `receipt_missing` | No authoritative persisted receipt exists for the receipt identity. |
-| `receipt_revoked` | The host has revoked the authoritative receipt state. |
-| `receipt_exhausted` | The authoritative redemption limit was already reached. |
-| `receipt_expired` | The host store denied use at or after the authoritative expiration time. |
+| `receipt_missing` | Your trusted store has no receipt record for the receipt identity. |
+| `receipt_revoked` | Your app has revoked the receipt. |
+| `receipt_exhausted` | The receipt's use limit was already reached. |
+| `receipt_expired` | Your store denied use at or after the trusted expiration time. |
 | `authority_mismatch` | Signed, trusted-host, or persisted authority does not match. |
-| `concurrency_conflict` | Authoritative state changed and this attempt did not consume access. It is never success. |
+| `concurrency_conflict` | Trusted state changed and this attempt did not record a use. It is never success. |
 
 The verifier may instead return `verification_denied` for an expired or
 otherwise untrusted receipt before the store is called. The library does not
@@ -316,14 +317,14 @@ import type { AccessReceiptStore } from "@fiberlatch/access";
 
 const store: AccessReceiptStore = {
   async consume(command) {
-    // Replace this placeholder with one authoritative atomic transition.
+    // Replace this placeholder with one atomic check-and-update operation.
     // Inspect command.jti, authority, expiry, and redemption policy in host state.
     return { outcome: "receipt_missing" };
   },
 };
 ~~~
 
-The host store owns authoritative receipt existence, revocation, expiry,
+The host store is responsible for receipt existence, revocation, expiry,
 authority, redemption count, exhaustion, and atomic consumption. The command
 includes the verified `jti`, signed authority and bindings, grant type, maximum
 redemptions, `exp`, trusted `current_time`, and an optional host
@@ -360,11 +361,11 @@ shape. Those cases become `system_failure` and must fail closed.
 
 The host owns payment verification and trust, user or subject identity,
 resource meaning, policy meaning, intent meaning, trusted signer and verifier
-configuration, persistence, revocation, authoritative redemption counts,
-atomic consume semantics, and the final HTTP or application access decision.
+configuration, storage, revocation, redemption counts, atomic consume
+semantics, and the final HTTP or application access decision.
 
 FiberLatch Access owns claim validation, receipt signing, receipt verification,
-binding evaluation, and redemption orchestration against the host-owned store.
+checking receipt bindings and safely recording use through your app's store.
 It does not verify payments, call Fiber RPC during normal verification or
 redemption, persist or revoke receipts, or make the final access decision.
 
@@ -397,12 +398,12 @@ are not supported, and source-file or subpath imports are not supported.
 
 Use the [paid-resource example](https://github.com/Ticoworld/fiber-latch/blob/master/examples/paid-resource/README.md)
 for the full runnable native-HTTP integration example. Its payment fixture is
-host-owned demo data, not Fiber payment proof; issuance occurs only after the
+server-side demo data, not Fiber payment proof; issuance occurs only after the
 host trusts that fixture. It demonstrates protected-resource redemption,
 first-use success, replay denial, a process-local store, and the limits of a
 single-process concurrency proof.
 
-## Source and project records
+## Source, support, and license
 
 Normal adopters should use npm. For source review or contributor work, use the
 repository's existing package and example checks:
@@ -418,14 +419,13 @@ npm run verify:access:example
 The package source is under
 [`packages/access`](https://github.com/Ticoworld/fiber-latch/tree/master/packages/access).
 The [package verification guide](https://github.com/Ticoworld/fiber-latch/blob/master/docs/fiberlatch-access-verification.md)
-contains the detailed packed-consumer and repository checks.
+contains the detailed packed-consumer checks for source review and maintainer
+work.
 
 Report product bugs or documentation issues through
 [GitHub Issues](https://github.com/Ticoworld/fiber-latch/issues).
 
-Project records:
-
-- [Package verification guide](https://github.com/Ticoworld/fiber-latch/blob/master/docs/fiberlatch-access-verification.md)
-- [Final/pre-final delivery report](https://github.com/Ticoworld/fiber-latch/blob/master/docs/fiberlatch-access-final-report.md)
-- [Grant ledger](https://github.com/Ticoworld/fiber-latch/blob/master/docs/fiberlatch-access-grant-ledger.md)
+- [Source repository](https://github.com/Ticoworld/fiber-latch)
+- [Paid-resource example](https://github.com/Ticoworld/fiber-latch/tree/master/examples/paid-resource)
+- [GitHub Issues](https://github.com/Ticoworld/fiber-latch/issues)
 - [ISC license](https://github.com/Ticoworld/fiber-latch/blob/master/packages/access/LICENSE)

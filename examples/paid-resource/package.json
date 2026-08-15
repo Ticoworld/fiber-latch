@@ -2,7 +2,7 @@
   "name": "@fiberlatch/paid-resource-example",
   "version": "0.0.0-development",
   "private": true,
-  "description": "A grant-specific FiberLatch Access paid-resource example.",
+  "description": "A runnable paid-resource example for FiberLatch Access.",
   "type": "module",
   "engines": {
     "node": ">=22.12.0"

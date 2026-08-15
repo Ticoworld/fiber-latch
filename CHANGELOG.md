@@ -6,19 +6,20 @@ All entries describe what was proven or changed in each phase. Proof boundaries 
 
 ## FiberLatch Access grant delivery — 2026-08-06
 
-- Completed the D1–D4 FiberLatch Access specifications for scope, receipt
-  format, expiration and replay, and signing and verification.
+- Completed the FiberLatch Access specifications for scope, receipt format,
+  expiration and replay, and signing and verification.
 - Delivered the isolated private `@fiberlatch/access` package with package-root
-  claim construction, Ed25519 signing and verification, binding evaluation, a
-  host atomic store contract, and redemption orchestration.
+  claim construction, Ed25519 signing and verification, receipt matching, a
+  host atomic store contract, and the redemption flow.
 - Added Node 22 and Node 24 package-distribution proof, including packed ESM,
   CommonJS, and TypeScript consumers.
 - Added the paid-resource example with automated first-use success, replay
   denial, and a single-process exactly-one-of-two concurrency proof.
-- Added reviewer verification instructions, the grant evidence ledger updates,
-  and the final delivery report.
-- The package remains private and unpublished; no production adapter, hosted
-  service, mainnet claim, or formal-audit claim is made.
+- Added reviewer verification instructions, grant evidence ledger updates, and
+  the final delivery report.
+- At the time of this entry, the package was private and unpublished; no
+  production adapter, hosted service, mainnet claim, or formal-audit claim was
+  made.
 
 ---
 

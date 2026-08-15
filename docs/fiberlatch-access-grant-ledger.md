@@ -1,9 +1,10 @@
 # FiberLatch Access Grant Ledger
 
-This ledger separates prior FiberLatch foundation from grant delivery, tracks blockers, and prevents unreviewed work from being counted as complete.
+This ledger separates prior FiberLatch foundation from grant delivery, records
+blockers, and prevents unreviewed work from being counted as complete.
 
-Current chronology: D1-D6 are VERIFIED COMPLETE and the Weeks 3-4
-implementation milestone is complete. The public `@fiberlatch/access@0.1.0`
+Current status: D1-D6 are VERIFIED COMPLETE and the Weeks 3-4 implementation is
+complete. The public `@fiberlatch/access@0.1.0`
 npm release is a Weeks 5-6 distribution and onboarding improvement. D7 is IN
 PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING. Existing D7 commits, CI runs,
 tests, and review notes are early/pre-final evidence; they do not represent

@@ -3,27 +3,28 @@
 ## Status notice - 9 August 2026
 
 This report was prepared early, ahead of the formal Weeks 5-6 closure. It is
-currently a draft/pre-final delivery report, not the final grant-completion
-submission. D1-D6 and the Weeks 3-4 implementation milestone are complete.
-D7 is IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING. Weeks 5-6 remain for
-external-developer usability, installability, documentation cleanup, final
-acceptance, and final verification.
+still a draft/pre-final delivery report, not the final grant-completion
+submission. The scope, receipt, expiration/replay, signing, package, and
+paid-resource example deliverables have implementation evidence. The
+documentation and final report remain IN PROGRESS - FINAL WEEKS 5-6
+VERIFICATION PENDING. External-developer usability, installability,
+documentation cleanup, final acceptance, and final verification remain.
 
 ## 1. Executive summary
 
-FiberLatch Access delivered the Weeks 1-4 implementation milestone: four
+FiberLatch Access delivered the Weeks 1-4 implementation: four
 written specifications, a reusable Node package, a paid-resource example, and
 an early reviewer documentation and evidence baseline. The package was later
 published as `@fiberlatch/access@0.1.0` as a Weeks 5-6 distribution improvement.
 
 The package is a focused access-control boundary after a host establishes
 payment trust. It constructs claims, signs and verifies Ed25519 receipts,
-checks host bindings, and orchestrates redemption through a host-owned atomic
-store. The paid-resource example demonstrates first-use success and replay
-denial from a server-owned payment fixture.
+checks host bindings, and records redemption through an app-owned atomic store.
+The paid-resource example demonstrates first-use success and replay denial from
+server-side demo payment data.
 
-D1-D6 are verified complete based on their implementation evidence. D7 remains
-in progress: the current documentation, verification evidence, and report were
+The implementation and package/example work has evidence for the approved
+scope. The current documentation, verification evidence, and report were
 prepared early and do not complete the remaining Weeks 5-6 external-developer
 usability, installability, documentation cleanup, final acceptance, and
 completion reporting.
@@ -41,8 +42,8 @@ understand, install, test, run, and adapt without copying the full FiberLatch
 backend.
 
 The scope covers receipt format, expiration, replay requirements, signing,
-verification, claim construction, binding evaluation, typed outcomes, host
-persistence requirements, valid redemption, denial of invalid or reused
+verification, claim construction, receipt matching, typed outcomes, app storage
+requirements, valid redemption, denial of invalid or reused
 receipts, and setup/security/limitation documentation.
 
 The scope excludes payment processing, a payment SDK, a hosted service, a
@@ -58,9 +59,10 @@ through Fiber v0.8.1 RPC, issued a signed receipt, redeemed once, and denied
 reuse. It remains historical evidence and was not funded again by this grant.
 
 The grant-funded delivery is the independent package boundary at
-packages/access, the grant-specific example at examples/paid-resource, the
-D1–D4 specifications, and the reviewer documentation and evidence mapping in
-this checkpoint. The package does not require the backend's Fastify, Prisma,
+packages/access, the paid-resource example at examples/paid-resource, the
+scope, receipt, expiration/replay, and signing/verification specifications,
+and the reviewer documentation and evidence mapping in this report. The
+package does not require the backend's Fastify, Prisma,
 SQLite, routes, or environment-loading behaviour.
 
 ## 4. Delivery timeline
@@ -68,25 +70,25 @@ SQLite, routes, or environment-loading behaviour.
 | Period | Delivery |
 | --- | --- |
 | Weeks 1–2 | Scope, receipt format, expiration/replay, signing/verification, package design, and ledger were specified. |
-| Weeks 3–4 | Package claim construction, signing, verification, binding evaluation, store contract, and redemption orchestration were implemented and tested. |
-| Weeks 3–4 / D6 | The paid-resource example and packed acceptance flow were added. |
-| Weeks 5–6 / D7 | Reviewer documentation, pre-final report, cleanup, evidence ledger, and an early verification checkpoint were prepared ahead of the remaining external-developer usability, installability, final acceptance, and completion reporting. |
+| Weeks 3–4 | Package claim construction, signing, verification, receipt matching, store contract, and redemption were implemented and tested. |
+| Weeks 3–4 / Paid-resource example | The paid-resource example and packed acceptance flow were added. |
+| Weeks 5–6 / Documentation and final report | Reviewer documentation, pre-final report, cleanup, evidence ledger, and an early verification record were prepared ahead of the remaining external-developer usability, installability, final acceptance, and completion reporting. |
 
 ## 5. Deliverable status table
 
 | Deliverable | Artifact | Relevant commit | Verification evidence | Current status | Limitations |
 | --- | --- | --- | --- | --- | --- |
-| D1 scope and design | [fiberlatch-access-scope.md](fiberlatch-access-scope.md) | [b28cc1b](https://github.com/Ticoworld/fiber-latch/commit/b28cc1b0722b531fee8d1efaec24ce5c3ba9143e) | Versioned scope boundary; independent review approved | VERIFIED COMPLETE | Defines an access boundary, not payment settlement or final host enforcement |
-| D2 receipt format | [fiberlatch-access-receipt-format.md](fiberlatch-access-receipt-format.md) | [b606abb](https://github.com/Ticoworld/fiber-latch/commit/b606abbdff759f3bafef53280225b4b4f7962a96) | Versioned claims and lifecycle shape; technical review and hygiene verification completed | VERIFIED COMPLETE | A receipt is not payment proof or standalone authorization |
-| D3 expiration and replay | [fiberlatch-access-expiration-replay.md](fiberlatch-access-expiration-replay.md) | [556bed3](https://github.com/Ticoworld/fiber-latch/commit/556bed351d4c8b7dbc0ce13306564905e2613e11) | Versioned rules; independent technical/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | Replay protection requires host-owned persistent atomic state |
-| D4 signing and verification | [fiberlatch-access-signing-verification.md](fiberlatch-access-signing-verification.md) | [9215d26](https://github.com/Ticoworld/fiber-latch/commit/9215d264bbd434a3f85df0b2bd836d5efada3b46) | Versioned rules; independent security/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | No formal security audit or remote key infrastructure is claimed |
-| D5 Node package | [packages/access](../packages/access), design doc | [8dadae6](https://github.com/Ticoworld/fiber-latch/commit/8dadae65319dd20cf57c67ab60801e11748293da) and [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e) | 235 package tests; build; publint; ATTW; packed ESM/CommonJS/TypeScript consumers; Node 22/24 run 31078601378; independent package/redemption reviews approved | VERIFIED COMPLETE | Publicly distributed as `@fiberlatch/access@0.1.0`, Node-only, and without a production database adapter |
-| D6 paid-resource example | [examples/paid-resource](../examples/paid-resource) | [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3) | 12 example tests; first-use/replay demo; packed acceptance; exactly-one-of-two single-process concurrency proof; Node 22/24 run 31093114518; independent focused integration review: APPROVE | VERIFIED COMPLETE | Fixture is not a Fiber payment; no durable multi-process store or hosted service |
-| D7 documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3) | Early/pre-final evidence: `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459); Node 22 passed; Node 24 passed; backend validation, access-package verification, and paid-resource verification passed; 304 tests passed; zero skipped or todo tests; independent grant-wide review recorded as APPROVE for the pre-final baseline | IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING | Weeks 5-6 usability, installability, documentation cleanup, final acceptance, and completion reporting remain |
+| Scope and design | [fiberlatch-access-scope.md](fiberlatch-access-scope.md) | [b28cc1b](https://github.com/Ticoworld/fiber-latch/commit/b28cc1b0722b531fee8d1efaec24ce5c3ba9143e) | Versioned scope boundary; independent review approved | VERIFIED COMPLETE | Defines an access boundary, not payment settlement or final host enforcement |
+| Receipt format | [fiberlatch-access-receipt-format.md](fiberlatch-access-receipt-format.md) | [b606abb](https://github.com/Ticoworld/fiber-latch/commit/b606abbdff759f3bafef53280225b4b4f7962a96) | Versioned claims and lifecycle shape; technical review and hygiene verification completed | VERIFIED COMPLETE | A receipt is not payment proof or standalone authorization |
+| Expiration and replay | [fiberlatch-access-expiration-replay.md](fiberlatch-access-expiration-replay.md) | [556bed3](https://github.com/Ticoworld/fiber-latch/commit/556bed351d4c8b7dbc0ce13306564905e2613e11) | Versioned rules; independent technical/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | Replay protection requires host-owned persistent atomic state |
+| Signing and verification | [fiberlatch-access-signing-verification.md](fiberlatch-access-signing-verification.md) | [9215d26](https://github.com/Ticoworld/fiber-latch/commit/9215d264bbd434a3f85df0b2bd836d5efada3b46) | Versioned rules; independent security/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | No formal security audit or remote key infrastructure is claimed |
+| Node package | [packages/access](../packages/access), design doc | [8dadae6](https://github.com/Ticoworld/fiber-latch/commit/8dadae65319dd20cf57c67ab60801e11748293da) and [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e) | 235 package tests; build; publint; ATTW; packed ESM/CommonJS/TypeScript consumers; Node 22/24 run 31078601378; independent package/redemption reviews approved | VERIFIED COMPLETE | Publicly distributed as `@fiberlatch/access@0.1.0`, Node-only, and without a production database adapter |
+| Paid-resource example | [examples/paid-resource](../examples/paid-resource) | [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3) | 12 example tests; first-use/replay demo; packed acceptance; exactly-one-of-two single-process concurrency proof; Node 22/24 run 31093114518; independent focused integration review: APPROVE | VERIFIED COMPLETE | Fixture is not a Fiber payment; no durable multi-process store or hosted service |
+| Documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3) | Early/pre-final evidence: `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459); Node 22 passed; Node 24 passed; backend validation, access-package verification, and paid-resource verification passed; 304 tests passed; zero skipped or todo tests; independent grant-wide review recorded as APPROVE for the pre-final baseline | IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING | Weeks 5-6 usability, installability, documentation cleanup, final acceptance, and completion reporting remain |
 
-## 6. D1 scope and design
+## 6. Scope and design
 
-The D1 scope document freezes the boundary between payment tooling, the host
+The scope document freezes the boundary between payment tooling, the host
 application, FiberLatch Access, and the historical backend. It makes payment
 trust, identity, protected resources, policy meaning, persistence, and final
 enforcement host responsibilities. The package is not a payment SDK or
@@ -95,42 +97,39 @@ general Fiber RPC wrapper.
 Artifact: [docs/fiberlatch-access-scope.md](fiberlatch-access-scope.md).
 Evidence: commit b28cc1b0722b531fee8d1efaec24ce5c3ba9143e, versioned scope,
 independent review approval, and baseline backend tests/build.
-Status: VERIFIED COMPLETE.
 Limitation: this is the approved boundary and design, not a hosted payment
 service or production guarantee.
 
-## 7. D2 receipt format
+## 7. Receipt format
 
 The receipt format defines a signed JWT claim set with issuer, subject,
 audience, integer time fields, receipt identity, intent/resource/policy
-bindings, nullable payment correlation metadata, grant type, and redemption
-limit. The format explicitly says payment_ref is correlation metadata, not
+bindings, a payment-record reference, grant type, and redemption limit. The
+format explicitly says payment_ref is a reference, not
 payment proof, and preserves host responsibility for final authorization.
 
 Artifact: [docs/fiberlatch-access-receipt-format.md](fiberlatch-access-receipt-format.md).
 Evidence: commit b606abbdff759f3bafef53280225b4b4f7962a96, technical review, and
 hygiene verification.
-Status: VERIFIED COMPLETE.
 Limitation: the receipt is not standalone authorization and does not replace
 host persistence.
 
-## 8. D3 expiration and replay
+## 8. Expiration and replay
 
-The D3 rules define time validity and the required atomic redemption boundary.
-The host-owned state is authoritative for existence, revocation, exhaustion,
+The expiration and replay rules define time validity and the required atomic
+redemption boundary. The app-owned state is trusted for existence, revocation, exhaustion,
 redemption count, and persisted bindings. A jti identifies a receipt but does
 not itself prevent reuse. Ordinary redemption does not require Fiber RPC.
 
 Artifact: [docs/fiberlatch-access-expiration-replay.md](fiberlatch-access-expiration-replay.md).
 Evidence: commit 556bed351d4c8b7dbc0ce13306564905e2613e11, independent technical
 and public-hygiene review, and 57 backend tests/build evidence.
-Status: VERIFIED COMPLETE.
 Limitation: distributed replay protection is not supplied by the package; the
 host must implement the atomic persistent transition.
 
-## 9. D4 signing and verification
+## 9. Signing and verification
 
-The D4 rules constrain the cryptographic profile to Ed25519/EdDSA, trusted
+The signing and verification rules constrain the cryptographic profile to Ed25519/EdDSA, trusted
 issuer and audience, protected typ/kid handling, required claims, strict time
 checks, safe denial, and no token-controlled key retrieval. Verification is
 separate from binding, persistence, and final access enforcement.
@@ -138,11 +137,10 @@ separate from binding, persistence, and final access enforcement.
 Artifact: [docs/fiberlatch-access-signing-verification.md](fiberlatch-access-signing-verification.md).
 Evidence: commit 9215d264bbd434a3f85df0b2bd836d5efada3b46, independent security
 and public-hygiene review, and 57 backend tests/build evidence.
-Status: VERIFIED COMPLETE.
 Limitation: no formal security audit, key-management service, or production
 readiness is claimed.
 
-## 10. D5 Node package
+## 10. Node package
 
 The package at [packages/access](../packages/access) is deliberately
 framework-independent and has no Fastify, Prisma, SQLite, or Fiber RPC
@@ -154,16 +152,15 @@ final package API and redemption f7e5b7b72f3bec285bd09e2dd4d710fd2811238e.
 Evidence: 235 package tests, package build, publint, ATTW, packed ESM,
 CommonJS, and TypeScript consumers, Node 22/24 CI run 31078601378, and
 independent package/redemption reviews approved.
-Status: VERIFIED COMPLETE.
 Current distribution: `@fiberlatch/access@0.1.0` is publicly available through
 npm. Remaining limitations: it requires Node >=22.12.0, is native ESM with
 supported require(esm), has no browser support, and ships no production
 database adapter.
 
-## 11. D6 paid-resource example
+## 11. Paid-resource example
 
 The example at [examples/paid-resource](../examples/paid-resource) shows the
-host integration boundary with a server-owned fixture. It keeps raw receipt
+host integration boundary with server-side demo data. It keeps raw receipt
 tokens out of the demonstration store, registers trusted authority, checks
 bindings, atomically consumes one use, serves content once, and denies replay.
 
@@ -172,14 +169,13 @@ Evidence: 12 tests, automated first-use/replay demonstration, packed
 paid-resource acceptance, exactly-one-of-two single-process concurrency proof,
 Node 22/24 CI run 31093114518, and an independent focused integration review
 with result APPROVE / READY TO COMMIT.
-Status: VERIFIED COMPLETE.
 Limitations: the payment fixture is not a Fiber payment; the store is an
 in-memory demonstration, not durable multi-process replay protection; no
 hosted service or production payment integration is included.
 
-## 12. D7 documentation and pre-final verification
+## 12. Documentation and pre-final verification
 
-This early checkpoint adds the reviewer verification guide, this pre-final
+This early record adds the reviewer verification guide, this pre-final
 report, root
 README and quickstart separation, package and example documentation updates,
 changelog entry, ledger evidence, final acceptance script, and narrow packed
@@ -195,7 +191,8 @@ Node 22 and Node 24 passed, and an independent grant-wide review was recorded
 as APPROVE for the pre-final baseline. The combined validation total
 was 304 passed tests with zero skipped or todo tests. These are valid early
 implementation and documentation evidence, not the final grant-completion
-submission. Status: IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING.
+submission. The documentation and final report remain IN PROGRESS - FINAL
+WEEKS 5-6 VERIFICATION PENDING.
 Weeks 5-6 remain for external-developer usability, installability,
 documentation cleanup, final acceptance, and final verification. Limitation:
 this evidence update changes documentation status only and does not alter
@@ -222,11 +219,11 @@ failure. It is a contract, not a shipped production adapter.
 
 ## 14. Host responsibility boundary
 
-The host must establish payment trust, correlate payment to the intended access,
-own users and policies, supply trusted bindings, persist authoritative receipt
-state, implement atomic consumption, manage revocation and expiry state, and
-make the final protected-resource decision. payment_ref is correlation
-metadata only. Package verification and redemption perform no Fiber RPC.
+The host must establish payment trust, link payment to the intended access,
+own users and policies, supply trusted bindings, keep receipt state in trusted
+storage, implement atomic consumption, manage revocation and expiry state, and
+make the final protected-resource decision. `payment_ref` is a reference only,
+not payment proof. Package verification and redemption perform no Fiber RPC.
 
 The architecture flow is:
 
@@ -256,8 +253,8 @@ distribution.
 
 ## 16. Paid-resource proof
 
-The example uses the identifier demo-payment-001 in a private server-owned
-fixture. A client cannot mark an arbitrary payment as verified. Once the
+The example uses the identifier demo-payment-001 in private server-side demo
+data. A client cannot mark an arbitrary payment as verified. Once the
 fixture is accepted, the host builds and signs claims, registers trusted
 authority, and uses the package to verify bindings and consume access.
 
@@ -285,10 +282,10 @@ The focused evidence is:
 - automated example success/replay demonstration
 - packed paid-resource acceptance
 
-D5 CI: commit f7e5b7b72f3bec285bd09e2dd4d710fd2811238e, run 31078601378,
+Node package CI: commit f7e5b7b72f3bec285bd09e2dd4d710fd2811238e, run 31078601378,
 Node 22 passed, Node 24 passed.
 
-D6 CI: commit e06ad183f25fd35ea7570914ad38bf695940d6f3, run 31093114518,
+Paid-resource CI: commit e06ad183f25fd35ea7570914ad38bf695940d6f3, run 31093114518,
 Node 22 passed, Node 24 passed, package verification passed, and packed
 paid-resource acceptance passed.
 
@@ -312,7 +309,7 @@ The delivered package and specifications provide these bounded properties:
 - Demonstration output does not print receipt tokens or signing keys.
 
 These properties depend on the host supplying trusted context and a correct
-authoritative store. A signed receipt alone is not replay protection.
+trusted store. A signed receipt alone is not replay protection.
 
 ## 19. Known limitations
 
@@ -337,7 +334,7 @@ The proposal describes an open-source package. This repository-distributed
 package is ISC-licensed and is now publicly available on npm as
 `@fiberlatch/access@0.1.0`; publication is a distribution and onboarding
 improvement, not a production-readiness claim. The example
-uses a clearly labelled server-owned fixture to prove the access pattern; it
+uses clearly labelled server-side demo data to prove the access pattern; it
 does not claim a new live Fiber payment and does not repeat the historical live
 proof as grant work.
 
@@ -362,31 +359,33 @@ git diff --check
 
 The focused commands may repeat work from the final acceptance command. That
 duplication is intentional for reviewer traceability. Do not run npm audit fix;
-it is outside this checkpoint.
+it is outside this review.
 
 ## 22. Repository evidence index
 
 - [Root README](../README.md)
-- [Grant-first quickstart](../QUICKSTART.md)
+- [Reviewer quickstart](../QUICKSTART.md)
 - [Reviewer verification guide](fiberlatch-access-verification.md)
 - [Package README](../packages/access/README.md)
 - [Paid-resource example README](../examples/paid-resource/README.md)
 - [Grant ledger](fiberlatch-access-grant-ledger.md)
-- [D1 scope](fiberlatch-access-scope.md)
-- [D2 receipt format](fiberlatch-access-receipt-format.md)
-- [D3 expiration and replay](fiberlatch-access-expiration-replay.md)
-- [D4 signing and verification](fiberlatch-access-signing-verification.md)
-- [D5 package design](fiberlatch-access-package-design.md)
+- [Scope and design](fiberlatch-access-scope.md)
+- [Receipt format](fiberlatch-access-receipt-format.md)
+- [Expiration and replay](fiberlatch-access-expiration-replay.md)
+- [Signing and verification](fiberlatch-access-signing-verification.md)
+- [Package design](fiberlatch-access-package-design.md)
 - [Approved proposal](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414)
 - [Weeks 1–2 public update](https://talk.nervos.org/t/dis-fiberlatch-access-open-source-access-control-for-fiber-payments/10414/4?u=ticoworld)
-- [D5 CI run 31078601378](https://github.com/Ticoworld/fiber-latch/actions/runs/31078601378)
-- [D6 CI run 31093114518](https://github.com/Ticoworld/fiber-latch/actions/runs/31093114518)
+- [Node package CI run 31078601378](https://github.com/Ticoworld/fiber-latch/actions/runs/31078601378)
+- [Paid-resource CI run 31093114518](https://github.com/Ticoworld/fiber-latch/actions/runs/31093114518)
 
 ## 23. Conclusion
 
 FiberLatch Access now has a reviewable package boundary, reproducible local
 packed-distribution proof, a focused paid-resource demonstration, explicit
 security and host-responsibility limits, and an evidence map for all seven
-approved deliverables. D1-D6 are verified complete. D7 remains in progress
-pending Weeks 5-6 external-developer usability, installability, documentation
-cleanup, final acceptance, and final completion reporting.
+approved deliverables. The scope, receipt, expiration/replay, signing,
+package, and example work has verification evidence. The documentation and
+final report remain in progress pending Weeks 5-6 external-developer
+usability, installability, documentation cleanup, final acceptance, and final
+completion reporting.
