@@ -1,6 +1,6 @@
 {
   "name": "@fiberlatch/access",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "FiberLatch Access package for signing, verifying, binding, and redeeming host-issued access receipts.",
   "license": "ISC",
   "publishConfig": {
@@ -43,14 +43,6 @@
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "build": "npm run clean && tsc -p tsconfig.json",
-    "lint:package": "publint --strict",
-    "check:types": "attw --pack . --profile esm-only",
-    "test:distribution": "node ./scripts/verify-distribution.mjs",
-    "verify": "npm run build && npm run lint:package && npm run check:types && npm run test:distribution"
-  },
   "dependencies": {
     "jose": "6.2.3",
     "zod": "4.4.3"

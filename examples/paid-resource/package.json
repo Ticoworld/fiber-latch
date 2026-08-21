@@ -12,6 +12,6 @@
     "demo": "node src/demo.mjs"
   },
   "dependencies": {
-    "@fiberlatch/access": "0.1.0"
+    "@fiberlatch/access": "0.1.1"
   }
 }
