@@ -1,12 +1,25 @@
 # SDK/Core Boundary
 
-This document records the current Phase 4 SDK/core boundary decision for FiberLatch.
+> **Historical pre-package boundary record:** This document records a Phase 4
+> architectural exploration from before the reusable package was implemented.
+> Its "current", "future", "candidate", and "next steps" language describes
+> the design-time state and sequencing, not today's repository architecture.
 
-No SDK extraction is approved yet. The backend remains the reference implementation.
+Later grant work resulted in the current `packages/access` /
+`@fiberlatch/access@0.1.0` package, which is publicly published. The current
+package owns receipt claims, signing, verification, bindings, and the
+host-owned store boundary. It intentionally does not absorb Fiber payment
+verification or Fiber RPC. The historical backend remains useful as prior and
+reference work. See [`fiberlatch-access-package-design.md`](fiberlatch-access-package-design.md),
+[`packages/access/README.md`](../packages/access/README.md), and the current
+receipt specifications for the delivered boundary.
 
-## Current proven boundary
+At the Phase 4 design point, no SDK extraction had yet been approved, and the
+backend was the reference implementation.
 
-FiberLatch has proven a narrow live Fiber testnet flow:
+## Phase 4 Proven Boundary (historical)
+
+At that time, FiberLatch had proven a narrow live Fiber testnet flow:
 
 - a paid Fiber `payment_hash` is provided to FiberLatch
 - Fiber status is normalized to a paid state
@@ -17,17 +30,18 @@ FiberLatch has proven a narrow live Fiber testnet flow:
 
 This is testnet-only and reference implementation only. It is not a production or mainnet readiness claim.
 
-## Why SDK/core is being considered
+## Why SDK/core was being considered
 
 Yukang's feedback was that the signed receipt model makes sense, and that the application boundary of paid Fiber payment to signed access receipt to one-time redemption is useful.
 
-The current backend is still valuable as a reference implementation because it shows persistence, reconciliation, receipt issuance, verification, and redemption working together.
+The backend remains valuable as a reference implementation because it shows persistence, reconciliation, receipt issuance, verification, and redemption working together.
 
 For third-party apps, the reusable core may be more useful as an SDK or library than as a standalone backend service. An app may already have its own backend, database, resource model, user model, and HTTP API. In that case, FiberLatch should be easy to copy, embed, or adapt without forcing the app to adopt FiberLatch's backend shape.
 
-## Reusable core candidates
+## Historical Reusable-Core Candidates (pre-package)
 
-The following logic is a candidate for future SDK/core extraction:
+The following logic was identified as a candidate for SDK/core extraction during
+the pre-package exploration:
 
 - Fiber status normalization
 - Fiber verification result shape
@@ -38,7 +52,10 @@ The following logic is a candidate for future SDK/core extraction:
 - redemption decision rules
 - typed receipt failure reasons
 
-These candidates should be extracted only after the current behavior is hardened with focused tests.
+At that stage, these candidates were to be extracted only after the behavior
+was hardened with focused tests. The later `@fiberlatch/access` package
+intentionally excludes the Fiber-specific candidates above; it provides the
+framework-independent receipt and host-store boundary instead.
 
 ## Backend reference implementation candidates
 
@@ -53,9 +70,11 @@ The following logic should stay in the backend reference implementation:
 - HTTP response shaping
 - atomic DB redemption implementation
 
-The atomic DB redemption path is important as reference behavior, but the future SDK should not require Prisma or a specific database.
+The atomic DB redemption path is important as reference behavior, but the
+current `@fiberlatch/access` package does not require Prisma or a specific
+database.
 
-## Current coupling risks
+## Backend Coupling Risks Identified by the Historical Record
 
 `FiberLatchService` currently mixes several responsibilities:
 
@@ -66,7 +85,9 @@ The atomic DB redemption path is important as reference behavior, but the future
 - state transitions
 - HTTP-facing DTO shaping
 
-This makes the service useful as an integrated backend reference, but too coupled to extract directly as an SDK.
+This made the service useful as an integrated backend reference, but a poor
+direct extraction source. The later package was implemented independently
+instead of copying this backend service.
 
 Known coupling risks:
 
@@ -74,11 +95,17 @@ Known coupling risks:
 - the JWT signer imports backend signing key config
 - Fiber network calls happen inside DB transactions in some paths
 
-Before extraction, the core types should be decoupled from Prisma, signing should depend on SDK-shaped key inputs, and network calls inside DB transactions should be hardened or moved out.
+The design-time implication was that extraction would require core types to be
+decoupled from Prisma, signing to depend on SDK-shaped key inputs, and network
+calls inside DB transactions to be hardened or moved out. The later package
+addressed the reusable receipt boundary independently; these risks explain why
+Fiber RPC and payment verification were not moved into it.
 
-## Possible SDK API shape
+## Historical Possible SDK API Shape
 
-These are example shapes only. They are not an implementation plan and do not create a package boundary yet.
+These are historical example shapes only. They were not an implementation plan
+and did not create a package boundary. The current public API is documented in
+the package design and package README linked above.
 
 ```ts
 const payment = await verifyFiberPayment({
@@ -130,9 +157,14 @@ const decision = checkRedemptionPolicy({
 });
 ```
 
-Note: `checkRedemptionPolicy` above is an early, overly broad example name from Phase 4. See "Redemption policy boundary" below for the corrected scope and naming guidance. A future helper may only cover pre-atomic denial checks, not the full GRANTED/EXHAUSTED decision.
+Note: `checkRedemptionPolicy` above is an early, overly broad example name from
+Phase 4. See "Redemption policy boundary" below for the corrected scope and
+naming guidance. The later helper covers only pre-atomic denial checks, not the
+full GRANTED/EXHAUSTED decision.
 
-The SDK should prefer pure functions and narrow interfaces. It should not own persistence, HTTP routing, background scheduling, or app-specific access policy storage.
+The design principle was to prefer pure functions and narrow interfaces. The
+current package follows that boundary: it does not own persistence, HTTP
+routing, background scheduling, or app-specific access policy storage.
 
 ## Redemption policy boundary
 
@@ -199,7 +231,9 @@ This is implemented today in `src/domain/redemption-policy.ts`. It returns a den
 - the shared domain types those helpers depend on from `src/domain/access-state.ts` (`AccessIntentStatus`, `AccessReceiptStatus`, `ResourceType`, `SubjectType`)
 - `buildAccessReceiptClaims` and its `AccessReceiptClaims` / `AccessReceiptSignInput` types
 
-This is not a published SDK or package. It creates no new package boundary, has no separate `package.json`, and is not installable on its own.
+This backend internal barrel is not the published SDK or package. It creates no
+new package boundary, has no separate `package.json`, and is not installable on
+its own.
 
 `buildAccessReceiptClaims` and its types now live in `src/domain/receipt-claims.ts`, a dependency-light domain module with no imports of `jose`, `zod`, Prisma, Fastify, or the backend signing-key config. `src/integrations/receipts/jwt-access-receipt-signer.ts` imports the helper from there for use in `createJwtAccessReceiptSigner`, and `src/integrations/receipts/access-receipt-signer.ts` re-exports the two types for backward compatibility with existing imports. Moving this helper did not change the JWT claim shape, token contents, signing behavior, or verification behavior.
 
@@ -234,9 +268,10 @@ Do not put the following in Fiber `custom_records`:
 
 The signed receipt and the app's own storage should remain the authoritative access boundary.
 
-## Rough edges before extraction
+## Pre-Package Rough Edges and Boundaries (historical)
 
-The following should be hardened before SDK extraction:
+The pre-package review identified the following rough edges and boundary
+questions:
 
 - resource mismatch tests
 - subject mismatch tests
@@ -250,13 +285,24 @@ The following should be hardened before SDK extraction:
 - decoupling core status types from Prisma
 - deciding whether raw Fiber RPC responses should be stored
 
-## Next recommended steps
+These historical notes are not a current assertion that package extraction
+remains pending; the signed receipt and the app's own storage remain the
+authoritative access boundary.
 
-Recommended order:
+## Phase 4 Next Steps (historical sequence)
+
+The original Phase 4 sequence was:
 
 1. Add access-control edge-case tests first.
 2. Extract pure helpers after the tested behavior is clear.
 3. Consider a package boundary only after the helpers are stable.
 4. Keep the backend as the reference implementation.
 
-FiberLatch should remain narrow: verified Fiber payment state to signed access receipt to verification and redemption for a specific resource and subject.
+These are historical sequencing notes, not outstanding actions. The later
+grant work implemented the current package boundary while keeping the backend
+as the reference implementation.
+
+The overall FiberLatch system should remain narrow: verified Fiber payment
+state to signed access receipt to verification and redemption for a specific
+resource and subject. The reusable package itself begins after payment trust
+has been established.

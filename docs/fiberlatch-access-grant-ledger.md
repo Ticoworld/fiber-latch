@@ -43,9 +43,10 @@ Unacceptable evidence:
 - an uncommitted claim with no diff
 - prior backend functionality counted as a new package deliverable
 
-## Current verified baseline
+## Starting Verified Baseline (pre-grant)
 
-This is the baseline before grant implementation.
+This section records the verified repository state at the beginning of grant
+implementation. It is historical evidence, not the current repository state.
 
 - starting branch: `master`
 - starting SHA: `544e2f64f1aac3ee54bbe66f3f40ca61055e2142`
@@ -55,8 +56,8 @@ This is the baseline before grant implementation.
 - local-access demo: passing
 - protected-resource demo: passing
 - live proof: not rerun
-- current package: still a backend service
-- standalone access package: none exists
+- package state at start: backend service only
+- standalone access package at start: none existed
 
 ## Known project-wide constraints
 
@@ -71,7 +72,11 @@ This is the baseline before grant implementation.
 - preserve the historical proof
 - every public update must link to real evidence
 
-## Immediate task sequence
+## Initial Grant Task Sequence (historical)
+
+This sequence records the initial grant plan. D1-D6 above are now verified
+complete, and D7 remains in progress; these entries are not current pending
+package tasks.
 
 1. Review and approve the scope freeze.
 2. Specify the receipt format.

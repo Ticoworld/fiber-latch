@@ -1,5 +1,22 @@
 # FiberLatch Access Reusable Package Design
 
+> **Historical design record:** This document was authored before the reusable
+> package was implemented. Sections labeled as a baseline, proposal, expected
+> metadata, extraction map, testing strategy, or implementation sequence
+> preserve the design-time reasoning and are not statements that the work is
+> still pending.
+>
+> **Current state:** The design was subsequently implemented in
+> `packages/access`, and `@fiberlatch/access@0.1.0` is publicly published. The
+> current package provides the signing, verification, binding, and host-store
+> redemption APIs described here; the paid-resource example, package tests,
+> and packed-consumer checks also exist. The historical backend remains a
+> separate reference implementation. Payment trust, Fiber RPC, persistence,
+> and the final access decision remain host-owned. See
+> [`packages/access/README.md`](../packages/access/README.md) and the current
+> signing, verification, expiration, and receipt-format specifications for the
+> delivered surface.
+
 ## 1. Purpose
 This document defines the smallest reusable Node package that lets a host application validate trusted access-receipt claims, sign receipts, verify received receipts, evaluate bindings, and atomically redeem access through host-owned persistence.
 
@@ -26,16 +43,16 @@ The package is intended for the paid-resource example required by the grant. It 
 - The package supplies safe cryptographic and policy rules.
 - The existing backend remains a reference implementation and migration source.
 
-## 3. Current Repository Baseline
-The current repository is a backend-first CommonJS application that builds from `src` into `dist` with TypeScript targeting ES2022. Its runtime dependencies currently include `jose`, `zod`, `fastify`, and `@prisma/client`; the reusable package should keep only the cryptography and validation dependencies it needs.
+## 3. Historical Repository Baseline (pre-package)
+At design time, the repository was a backend-first CommonJS application that built from `src` into `dist` with TypeScript targeting ES2022. Its runtime dependencies included `jose`, `zod`, `fastify`, and `@prisma/client`; the reusable package was intended to keep only the cryptography and validation dependencies it needed.
 
-The current code already proves the receipt shape, JOSE signing and verification path, host-side payment and policy orchestration, persistent storage, and the JWKS publication route. The package design should be extracted from that baseline rather than copied as a backend-shaped library.
+That design-time code already proved the receipt shape, JOSE signing and verification path, host-side payment and policy orchestration, persistent storage, and the JWKS publication route. The package design was to be extracted from that baseline rather than copied as a backend-shaped library.
 
 The baseline also shows two important trust paths:
 - the default generated-key path creates an Ed25519 key pair at runtime
 - the configured private-JWK path currently imports trusted key material through generic EdDSA handling
 
-That baseline is the source of truth for current behavior, but it is not yet the reusable package boundary.
+That baseline was the source of truth for behavior at the time, while the reusable package boundary was still being designed. The subsequent implementation is the independent `packages/access` package described in the current package README and specifications.
 
 ## 4. Package Responsibility Boundary
 
@@ -59,27 +76,27 @@ That baseline is the source of truth for current behavior, but it is not yet the
 
 Payment must already be trusted before receipt issuance. `payment_ref` is correlation metadata, not payment proof. Signing does not prove correct payment verification. Cryptographic verification does not itself grant access. The host owns the database and the final access decision. The package must not require Fiber RPC during redemption.
 
-## 5. Proposed Repository Location
-`packages/access` is the recommended location.
+## 5. Proposed Repository Location (design-time decision)
+At design time, `packages/access` was the recommended location. It is now the implemented package location.
 
-This is the smallest clean location because it keeps the backend as the reference application, supports future npm packaging, isolates the package build and tests, and fits a normal workspace layout without forcing a second repository. `package/access` is less conventional, and a separate repository would split history and increase migration cost.
+This was the smallest clean location because it kept the backend as the reference application, was expected to support npm packaging, isolated the package build and tests, and fit a normal workspace layout without forcing a second repository. `package/access` was less conventional, and a separate repository would have split history and increased migration cost.
 
-The directory does not exist yet. Workspace and configuration changes happen during implementation, not in this design task.
+At the time of this record, the directory did not exist. Workspace and configuration changes were intentionally left for implementation; the current repository now contains the package and its independent manifest and source tree.
 
-Repository isolation rules:
+The design-time repository isolation rules were:
 
-- `packages/access` will have its own package manifest.
-- It will have its own isolated TypeScript build configuration.
-- It will have package-specific tests and consumer fixtures.
-- The root repository should use npm workspaces when implementation begins.
-- The repository should retain one root lockfile.
-- A separate package-level lockfile should not be committed unless a proven tooling limitation requires it.
-- The reusable package must not depend on the backend root package.
-- The backend reference application may depend on the reusable package.
-- Dependency direction must remain one-way: `backend -> reusable access package`.
-- The package must not import backend files through relative paths, TypeScript path aliases, or monorepo-only shortcuts.
-- Package tests must prove that it works through its published entrypoint, not through backend internals.
-- Workspace and root configuration changes happen only when package implementation begins.
+- `packages/access` would have its own package manifest.
+- It would have its own isolated TypeScript build configuration.
+- It would have package-specific tests and consumer fixtures.
+- The root repository would use npm workspaces during implementation.
+- The repository would retain one root lockfile.
+- A separate package-level lockfile would not be committed unless a proven tooling limitation required it.
+- The reusable package would not depend on the backend root package.
+- The backend reference application could depend on the reusable package.
+- Dependency direction would remain one-way: `backend -> reusable access package`.
+- The package would not import backend files through relative paths, TypeScript path aliases, or monorepo-only shortcuts.
+- Package tests would prove that it worked through its published entrypoint, not through backend internals.
+- Workspace and root configuration changes would occur as part of package implementation.
 
 ## 6. Runtime and Module Compatibility
 
@@ -121,7 +138,7 @@ const {
 } = require("<package>");
 ```
 
-Expected future package metadata:
+Design-time package metadata proposal:
 
 ```json
 {
@@ -146,6 +163,10 @@ Consumers use the root export only, never source-path imports.
 
 Exact output filenames may change only if equivalent behavior is proven.
 
+The implemented package metadata is in `packages/access/package.json`. The
+proposal above is retained for design comparison and is not a pending package
+setup task.
+
 ## 7. Runtime Dependency Budget
 
 | Dependency | Runtime? | Purpose |
@@ -153,9 +174,18 @@ Exact output filenames may change only if equivalent behavior is proven.
 | `jose` | Yes | Maintained JOSE cryptography for signing, verification, and header handling |
 | `zod` | Yes | Package-owned schema validation for trusted claims, sanitised verified output, binding inputs, and result shaping |
 
-The reusable package targets the maintained `jose` v6 major. `jose` is an ESM dependency, remains a normal runtime dependency, and must not be copied or reimplemented. It must not be bundled merely to hide compatibility issues. The package must verify compatibility against the selected v6 version before delivery. The backend may remain on its current JOSE version until backend integration work begins.
+The reusable package targets the maintained `jose` v6 major. The delivered
+package uses `jose` as a normal ESM runtime dependency and does not copy,
+reimplement, or bundle it merely to hide compatibility issues. The design
+required compatibility verification before delivery; the package's published
+manifest and distribution checks provide the current evidence. The backend may
+remain on its current JOSE version because it is a separate reference
+application.
 
-`zod` also remains a normal runtime dependency. Consumers should not be forced to provide or align their own Zod instance. Zod schemas must not become the primary public API. Public results should use ordinary TypeScript types and package-owned result objects. The selected Zod major should be pinned intentionally during implementation.
+`zod` also remains a normal runtime dependency. Consumers are not forced to
+provide or align their own Zod instance. Zod schemas are not the primary public
+API; public results use ordinary TypeScript types and package-owned result
+objects. The delivered package pins its selected Zod major in its manifest.
 
 Excluded runtime dependencies include Fastify, Prisma, database clients, Fiber SDK or RPC clients, HTTP clients, logging frameworks, environment loaders, UI libraries, and any other backend-only infrastructure dependency.
 
@@ -204,7 +234,7 @@ export class AccessReceiptVerificationError extends Error {
 }
 ```
 
-The verification error has stable name `AccessReceiptVerificationError` and message `Access receipt verification failed.`. Specific verification categories may remain internal for diagnostics and testing, but are not part of the stable public API. The verification error must not expose the full token, its signature segment, decoded unknown claim values, trusted JWK material, or raw JOSE or Zod errors. The verifier must never return claims when verification fails. Future `redeemAccessReceipt` maps `AccessReceiptVerificationError` to `verification_denied`; binding denials map to `binding_denied`, store denials map to `consumption_denied`, and unexpected internal failures remain distinguishable as `system_failure`. Verification remains pure and offline, with no database, Fiber RPC, network key retrieval, remote JWKS, or host authorization decision.
+The verification error has stable name `AccessReceiptVerificationError` and message `Access receipt verification failed.`. Specific verification categories may remain internal for diagnostics and testing, but are not part of the stable public API. The verification error must not expose the full token, its signature segment, decoded unknown claim values, trusted JWK material, or raw JOSE or Zod errors. The verifier must never return claims when verification fails. The implemented `redeemAccessReceipt` maps `AccessReceiptVerificationError` to `verification_denied`; binding denials map to `binding_denied`, store denials map to `consumption_denied`, and unexpected internal failures remain distinguishable as `system_failure`. Verification remains pure and offline, with no database, Fiber RPC, network key retrieval, remote JWKS, or host authorization decision.
 
 Failure policy:
 
@@ -450,9 +480,13 @@ A small internal module layout is enough:
 
 These modules remain internal. They should not become public subpath exports, and they should not replicate the backend directory structure.
 
-## 17. Current-Code Extraction Map
+## 17. Historical Current-Code Extraction Map
 
-| Current source | Reusable concept | Extract directly? | Required correction before extraction |
+This map records the design-time comparison between backend code and the
+package boundary. The boundary was subsequently implemented independently; it
+is not a current extraction queue.
+
+| Current source | Reusable concept | Extract directly? | Required boundary correction (design-time) |
 | -------------- | ---------------- | ----------------- | ------------------------------------- |
 | `src/core/index.ts` | Backend internal export barrel | No | Keep backend-only; create a deliberate package root entrypoint with only the approved public API |
 | `src/domain/receipt-claims.ts` | Claim schema and canonical claim builder | Partially | Require a present `payment_ref` member with explicit `null` allowed, enforce `iat <= nbf < exp`, enforce `grant_type` and `max_redemptions` consistency, and keep issuer/audience as trusted inputs |
@@ -464,7 +498,9 @@ These modules remain internal. They should not become public subpath exports, an
 
 Do not copy backend-specific state checks into the package core.
 
-`src/core/index.ts` stays backend-only; the package root entrypoint is designed independently from the backend barrel.
+`src/core/index.ts` stays backend-only; the package root entrypoint was designed
+independently from the backend barrel and is now implemented under
+`packages/access`.
 
 ## 18. Paid-Resource Integration Flow
 The host-side integration sequence is framework-neutral:
@@ -480,8 +516,10 @@ The host-side integration sequence is framework-neutral:
 
 `payment_ref` remains correlation metadata, not payment proof. No Fiber RPC is required in the package path.
 
-## 19. Testing Strategy
-The package needs its own tests, and the backend tests remain only prior evidence.
+## 19. Testing Strategy (design-time record)
+At design time, the package needed its own tests, while the backend tests were
+only prior evidence. This section preserves the original test strategy and
+timing; it is not a list of uncompleted package work.
 
 The consumer fixtures should use the built or packed package, not source aliases, direct `src` imports, monorepo-only TypeScript paths, or test-only module mocks:
 
@@ -501,7 +539,7 @@ const {
 } = require("<packed package>");
 ```
 
-| Layer | Current backend evidence | Package tests to add | Timing |
+| Layer | Current backend evidence | Package tests envisioned | Design-time timing |
 | ----- | ------------------------ | -------------------- | ------ |
 | Claim validation | Existing backend tests for receipt claims and redemption edge cases | Pure claim-validation tests for required fields, non-empty strings, required `payment_ref`, time ordering, and grant consistency | First implementation step after the skeleton |
 | Signing | Existing backend signing path coverage | Signing tests for protected header construction, key validation, and claim validation before signing | Alongside signer implementation |
@@ -510,14 +548,19 @@ const {
 | Binding evaluation | Existing subject and resource mismatch coverage | Pure binding tests for subject, resource, policy, intent, and optional redemption-limit comparison | Alongside binding implementation |
 | Persistent-state adapter | Existing backend repository behavior | Adapter contract tests for authority comparison, revocation, exhaustion, concurrency, and failure handling | Before backend integration |
 | Atomic redemption | Existing backend redemption behavior | Concurrent final-redemption tests and persistence-failure tests | Before backend integration |
-| Package distribution | None | External ESM consumer fixture, external CommonJS consumer fixture, external TypeScript consumer type-check, declaration-resolution test, export-resolution test, `npm pack` contents inspection, and clean installation into a temporary consumer project | After package build exists |
+| Package distribution | None in the backend predecessor | External ESM consumer fixture, external CommonJS consumer fixture, external TypeScript consumer type-check, declaration-resolution test, export-resolution test, `npm pack` contents inspection, and clean installation into a temporary consumer project | After package build existed |
 
-The existing 57 backend tests across 8 files are valuable prior evidence, but they do not prove package-distribution compatibility.
+The existing 57 backend tests across 8 files were valuable prior evidence, but
+they did not prove package-distribution compatibility. The delivered package's
+tests and packed-consumer checks are separate current evidence; the `None` in
+the table means there was no backend predecessor for package distribution.
 
 The package-distribution tests should use the built or packed package, not source aliases, direct `src` imports, monorepo-only TypeScript paths, or test-only module mocks. The external fixtures should run on Node 22 and Node 24 in both ESM and CommonJS forms.
 
-## 20. Implementation Sequence
-The implementation order should stay paired with tests:
+## 20. Historical Implementation Sequence (pre-delivery)
+The original implementation order was intended to stay paired with tests. It
+is preserved as historical sequencing evidence, not as an outstanding task
+list:
 
 1. Package skeleton, ESM export model, and real ESM/CommonJS consumer tests.
 2. Claim schema and types, with claim-validation tests.
@@ -532,22 +575,23 @@ The implementation order should stay paired with tests:
 11. Package usage documentation.
 12. Final packed-package and supported-runtime verification.
 
-Most package tests should not wait until after implementation is finished.
+The design called for package tests to be developed alongside implementation,
+not deferred until after implementation was finished.
 
 ## 21. Compatibility and Migration
 The package is designed to stay compatible with the current receipt payload shape while narrowing the trusted profile.
 
 - No receipt payload claim is added, removed, or renamed.
 - Current generated Ed25519 receipts are structurally compatible with the portable profile.
-- Current `typ` and `kid` output aligns with the proposed profile, with future `kid` enforcement checked against trusted key identity.
-- Configured non-Ed25519 trusted keys may need migration or explicit handling.
-- Current backend behavior still leaves `typ`, `kid`, missing `payment_ref`, full `iat <= nbf < exp` enforcement, and trusted issuer or audience hardening to the package boundary.
+- Current `typ` and `kid` output aligns with the proposed profile, and the delivered package checks `kid` against trusted key identity.
+- Configured non-Ed25519 trusted keys may need migration or explicit handling in the historical backend.
+- The historical backend behavior left `typ`, `kid`, missing `payment_ref`, full `iat <= nbf < exp` enforcement, and trusted issuer or audience hardening to the package boundary; the delivered package now owns those package-level checks.
 - Missing `payment_ref` receipts may fail under the stricter package.
 - Receipts with invalid time or grant-field relationships may fail under the stricter package.
 - Ephemeral keys cannot verify receipts across restart.
-- The existing backend can be adapted incrementally to consume the package.
+- The existing backend remains a separate reference application and may consume the package incrementally if integration is later desired.
 - Historical live proof remains prior foundation.
-- Package implementation does not yet exist.
+- At design time, package implementation remained to be done; it was subsequently delivered under `packages/access`.
 
 No compatibility is claimed for unknown external receipts or non-Ed25519 configured receipts.
 
@@ -570,8 +614,9 @@ No compatibility is claimed for unknown external receipts or non-Ed25519 configu
 - Formal security audit.
 - Mainnet-production guarantee.
 
-## 23. Decisions Still Deferred
-Only non-blocking decisions remain open:
+## 23. Decisions Deferred at Design Time
+The following decisions were open when this design record was authored. They
+are retained as historical context, not as current package blockers:
 
 - Final npm publication name.
 - Registry publication timing.
@@ -579,7 +624,8 @@ Only non-blocking decisions remain open:
 - Optional framework adapters.
 - Additional package documentation format.
 
-These are not deferred:
+The following design decisions were subsequently settled and are implemented
+by the current package:
 
 - Package responsibility boundary.
 - Repository location.
