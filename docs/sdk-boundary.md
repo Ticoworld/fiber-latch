@@ -6,7 +6,7 @@
 > the design-time state and sequencing, not today's repository architecture.
 
 Later grant work resulted in the current `packages/access` /
-`@fiberlatch/access@0.1.0` package, which is publicly published. The current
+`@fiberlatch/access@0.1.1` package, which is publicly published. The current
 package owns receipt claims, signing, verification, bindings, and the
 host-owned store boundary. It intentionally does not absorb Fiber payment
 verification or Fiber RPC. The historical backend remains useful as prior and

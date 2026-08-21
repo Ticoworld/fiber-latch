@@ -2,13 +2,12 @@
 
 ## 1. Purpose
 
-This guide gives a reviewer a short, reproducible path through the FiberLatch
-Access implementation baseline. It verifies the package,
-its distribution boundary, the paid-resource example, and the historical
-backend regression without treating the backend or its live Fiber proof as
-grant-funded package implementation. It is the current pre-final baseline;
-Weeks 5-6 external-developer usability, installability, documentation cleanup,
-and final grant acceptance remain pending.
+This guide gives a reviewer a short, reproducible path through the final
+FiberLatch Access delivery. It verifies the package, its local packed
+distribution boundary, the paid-resource example, and the historical backend
+regression without treating the backend or its live Fiber proof as
+grant-funded package implementation. The public release is
+`@fiberlatch/access@0.1.1`, produced from source commit `cac7821`.
 
 This is the reviewer acceptance path. External developers should use the
 [`packages/access/README.md`](../packages/access/README.md) adoption guide
@@ -27,7 +26,7 @@ separate.
   require(esm)
 - no browser runtime
 
-`@fiberlatch/access@0.1.0` is publicly available from npm. Verification
+`@fiberlatch/access@0.1.1` is publicly available from npm. Verification
 deliberately packs it locally and uses the generated tarball in a clean
 consumer so reviewers can reproduce the package boundary independently.
 
@@ -120,39 +119,23 @@ The package distribution fixtures separately cover ESM, CommonJS, and
 TypeScript package-root consumers. This reviewer path uses the local tarball
 and does not depend on registry publication.
 
-## 8. Node 22 and Node 24 CI evidence
+## 8. Node 22 and Node 24 CI and registry evidence
 
-Node package distribution evidence:
+Final package release source commit:
 
-- commit [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e)
-- GitHub Actions run [31078601378](https://github.com/Ticoworld/fiber-latch/actions/runs/31078601378)
-- Node 22 passed
-- Node 24 passed
+- `cac78216a803b5e287fa5c92ad0270226caf35e1`
+- [master CI run 32457825277](https://github.com/Ticoworld/fiber-latch/actions/runs/32457825277)
+- [grant-branch CI run 32457829076](https://github.com/Ticoworld/fiber-latch/actions/runs/32457829076)
+- Both runs passed Node 22 and Node 24, backend tests/build, access-package
+  verification, and paid-resource verification.
 
-Paid-resource example evidence:
-
-- commit [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3)
-- GitHub Actions run [31093114518](https://github.com/Ticoworld/fiber-latch/actions/runs/31093114518)
-- Node 22 passed
-- Node 24 passed
-- package verification passed
-- packed paid-resource acceptance passed
-
-Documentation and final-report pre-final evidence prepared early:
-
-- commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3)
-- GitHub Actions run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459)
-- Node 22 passed
-- Node 24 passed
-- backend validation passed
-- access-package verification passed
-- paid-resource verification passed
-- 304 tests passed with zero skipped or todo tests
-- independent grant-wide review recorded as APPROVE for the pre-final baseline
-
-These are valid early implementation and documentation evidence, not the final
-grant-completion submission. Weeks 5-6 usability, installability, cleanup, and
-final verification remain.
+Final registry-only verification installed `@fiberlatch/access@0.1.1`
+directly from the public npm registry in a clean external consumer. It passed
+package-root ESM, CommonJS, and TypeScript checks; claim construction,
+Ed25519 signing, verification, trusted bindings, first redemption, and replay
+denial as `receipt_exhausted`. It also confirmed no workspace dependency and no
+unusable published development scripts. No npm credentials are required for
+this public install or verification.
 
 ## 9. Expected Windows EBUSY handling
 

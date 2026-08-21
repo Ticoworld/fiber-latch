@@ -1,21 +1,18 @@
 # FiberLatch Access Final Delivery Report
 
-## Status notice - 9 August 2026
+## Final status - 21 August 2026
 
-This report was prepared early, ahead of the formal Weeks 5-6 closure. It is
-still a draft/pre-final delivery report, not the final grant-completion
-submission. The scope, receipt, expiration/replay, signing, package, and
-paid-resource example deliverables have implementation evidence. The
-documentation and final report remain IN PROGRESS - FINAL WEEKS 5-6
-VERIFICATION PENDING. External-developer usability, installability,
-documentation cleanup, final acceptance, and final verification remain.
+Technical, product, and documentation delivery for the approved FiberLatch
+Access grant scope is complete. This report records the final delivery,
+verification evidence, and limitations. The public Nervos completion post has
+not yet been submitted; it is the next administrative action.
 
 ## 1. Executive summary
 
-FiberLatch Access delivered the Weeks 1-4 implementation: four
-written specifications, a reusable Node package, a paid-resource example, and
-an early reviewer documentation and evidence baseline. The package was later
-published as `@fiberlatch/access@0.1.0` as a Weeks 5-6 distribution improvement.
+FiberLatch Access delivered four written specifications, a reusable Node
+package, a paid-resource example, and reviewer documentation and evidence. The
+first public npm release was `@fiberlatch/access@0.1.0`; the final polish
+release is `@fiberlatch/access@0.1.1`.
 
 The package is a focused access-control boundary after a host establishes
 payment trust. It constructs claims, signs and verifies Ed25519 receipts,
@@ -23,15 +20,12 @@ checks host bindings, and records redemption through an app-owned atomic store.
 The paid-resource example demonstrates first-use success and replay denial from
 server-side demo payment data.
 
-The implementation and package/example work has evidence for the approved
-scope. The current documentation, verification evidence, and report were
-prepared early and do not complete the remaining Weeks 5-6 external-developer
-usability, installability, documentation cleanup, final acceptance, and
-completion reporting.
+The implementation, package/example work, public distribution, external
+registry verification, documentation reconciliation, and final acceptance
+have evidence for the approved scope.
 
 Grant facts: $3,000, six weeks, $0 hosting cost, and one solo developer. The
-package was unpublished and repository-distributed at this report's baseline;
-it is now publicly distributed as `@fiberlatch/access@0.1.0`. No hosted
+final package is publicly distributed as `@fiberlatch/access@0.1.1`. No hosted
 service was created.
 
 ## 2. Approved grant scope
@@ -72,7 +66,7 @@ SQLite, routes, or environment-loading behaviour.
 | Weeks 1–2 | Scope, receipt format, expiration/replay, signing/verification, package design, and ledger were specified. |
 | Weeks 3–4 | Package claim construction, signing, verification, receipt matching, store contract, and redemption were implemented and tested. |
 | Weeks 3–4 / Paid-resource example | The paid-resource example and packed acceptance flow were added. |
-| Weeks 5–6 / Documentation and final report | Reviewer documentation, pre-final report, cleanup, evidence ledger, and an early verification record were prepared ahead of the remaining external-developer usability, installability, final acceptance, and completion reporting. |
+| Weeks 5–6 / Documentation and final report | Published the package, refreshed adopter-facing documentation, validated packed and registry-installed consumers, reconciled historical records, completed omission/red-team cleanup, finalized the 0.1.1 patch release, and recorded final evidence. |
 
 ## 5. Deliverable status table
 
@@ -82,9 +76,9 @@ SQLite, routes, or environment-loading behaviour.
 | Receipt format | [fiberlatch-access-receipt-format.md](fiberlatch-access-receipt-format.md) | [b606abb](https://github.com/Ticoworld/fiber-latch/commit/b606abbdff759f3bafef53280225b4b4f7962a96) | Versioned claims and lifecycle shape; technical review and hygiene verification completed | VERIFIED COMPLETE | A receipt is not payment proof or standalone authorization |
 | Expiration and replay | [fiberlatch-access-expiration-replay.md](fiberlatch-access-expiration-replay.md) | [556bed3](https://github.com/Ticoworld/fiber-latch/commit/556bed351d4c8b7dbc0ce13306564905e2613e11) | Versioned rules; independent technical/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | Replay protection requires host-owned persistent atomic state |
 | Signing and verification | [fiberlatch-access-signing-verification.md](fiberlatch-access-signing-verification.md) | [9215d26](https://github.com/Ticoworld/fiber-latch/commit/9215d264bbd434a3f85df0b2bd836d5efada3b46) | Versioned rules; independent security/public-hygiene review; 57 backend tests and build passed | VERIFIED COMPLETE | No formal security audit or remote key infrastructure is claimed |
-| Node package | [packages/access](../packages/access), design doc | [8dadae6](https://github.com/Ticoworld/fiber-latch/commit/8dadae65319dd20cf57c67ab60801e11748293da) and [f7e5b7b](https://github.com/Ticoworld/fiber-latch/commit/f7e5b7b72f3bec285bd09e2dd4d710fd2811238e) | 235 package tests; build; publint; ATTW; packed ESM/CommonJS/TypeScript consumers; Node 22/24 run 31078601378; independent package/redemption reviews approved | VERIFIED COMPLETE | Publicly distributed as `@fiberlatch/access@0.1.0`, Node-only, and without a production database adapter |
+| Node package | [packages/access](../packages/access), design doc | [cac7821](https://github.com/Ticoworld/fiber-latch/commit/cac78216a803b5e287fa5c92ad0270226caf35e1) | 235 package tests; build; publint; ATTW; packed ESM/CommonJS/TypeScript consumers; final Node 22/24 CI; clean registry-only ESM/CommonJS/TypeScript and functional consumer verification | VERIFIED COMPLETE | Publicly distributed as `@fiberlatch/access@0.1.1`, Node-only, and without a production database adapter |
 | Paid-resource example | [examples/paid-resource](../examples/paid-resource) | [e06ad18](https://github.com/Ticoworld/fiber-latch/commit/e06ad183f25fd35ea7570914ad38bf695940d6f3) | 12 example tests; first-use/replay demo; packed acceptance; exactly-one-of-two single-process concurrency proof; Node 22/24 run 31093114518; independent focused integration review: APPROVE | VERIFIED COMPLETE | Fixture is not a Fiber payment; no durable multi-process store or hosted service |
-| Documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3) | Early/pre-final evidence: `access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459); Node 22 passed; Node 24 passed; backend validation, access-package verification, and paid-resource verification passed; 304 tests passed; zero skipped or todo tests; independent grant-wide review recorded as APPROVE for the pre-final baseline | IN PROGRESS - FINAL WEEKS 5-6 VERIFICATION PENDING | Weeks 5-6 usability, installability, documentation cleanup, final acceptance, and completion reporting remain |
+| Documentation and final report | This report, [fiberlatch-access-verification.md](fiberlatch-access-verification.md), updated README/quickstart/changelog/ledger/package docs | Final closeout documentation update, based on release source commit [cac7821](https://github.com/Ticoworld/fiber-latch/commit/cac78216a803b5e287fa5c92ad0270226caf35e1) | Public npm distribution, adopter-facing README cleanup, documentation reconciliation, omission/red-team cleanup, final report, and registry-only verification recorded; final package source passed [master CI run 32457825277](https://github.com/Ticoworld/fiber-latch/actions/runs/32457825277) and [grant-branch CI run 32457829076](https://github.com/Ticoworld/fiber-latch/actions/runs/32457829076) | VERIFIED COMPLETE | The final public Nervos completion post is not yet submitted |
 
 ## 6. Scope and design
 
@@ -148,14 +142,19 @@ dependency. The package root exports the approved runtime API and type-only
 contracts without exposing internal subpaths.
 
 Artifact commits: package design 8dadae65319dd20cf57c67ab60801e11748293da;
-final package API and redemption f7e5b7b72f3bec285bd09e2dd4d710fd2811238e.
+final package API and redemption f7e5b7b72f3bec285bd09e2dd4d710fd2811238e;
+final release source cac78216a803b5e287fa5c92ad0270226caf35e1.
 Evidence: 235 package tests, package build, publint, ATTW, packed ESM,
-CommonJS, and TypeScript consumers, Node 22/24 CI run 31078601378, and
-independent package/redemption reviews approved.
-Current distribution: `@fiberlatch/access@0.1.0` is publicly available through
-npm. Remaining limitations: it requires Node >=22.12.0, is native ESM with
-supported require(esm), has no browser support, and ships no production
-database adapter.
+CommonJS, and TypeScript consumers; final Node 22/24 CI; and clean external
+registry verification of the immutable npm package.
+Current distribution: `@fiberlatch/access@0.1.1` is publicly available through
+npm. The 0.1.1 runtime JS, declarations, and source maps were byte-identical
+to 0.1.0 before publication. Remaining limitations: it requires Node
+>=22.12.0, is native ESM with supported require(esm), has no browser support,
+and ships no production database adapter.
+Registry state at closeout: `latest` is `0.1.1`; published versions are
+`0.1.0` and `0.1.1`. The release source commit is
+`cac78216a803b5e287fa5c92ad0270226caf35e1`.
 
 ## 11. Paid-resource example
 
@@ -173,30 +172,30 @@ Limitations: the payment fixture is not a Fiber payment; the store is an
 in-memory demonstration, not durable multi-process replay protection; no
 hosted service or production payment integration is included.
 
-## 12. Documentation and pre-final verification
+## 12. Documentation and final verification
 
-This early record adds the reviewer verification guide, this pre-final
-report, root
-README and quickstart separation, package and example documentation updates,
-changelog entry, ledger evidence, final acceptance script, and narrow packed
-verifier robustness cleanup.
+The final closeout records include the reviewer verification guide, this final
+report, the changelog, the grant ledger, and the reconciled package-design and
+SDK-boundary records. The omission/red-team review corrected stale historical
+planning statements without changing the package boundary or runtime.
 
-Artifacts: [fiberlatch-access-verification.md](fiberlatch-access-verification.md),
-this report, [README.md](../README.md), [QUICKSTART.md](../QUICKSTART.md),
-[CHANGELOG.md](../CHANGELOG.md), [packages/access/README.md](../packages/access/README.md),
-and [examples/paid-resource/README.md](../examples/paid-resource/README.md).
-Evidence: commit [8bbe2ef](https://github.com/Ticoworld/fiber-latch/commit/8bbe2ef2e0f35dc3f8e1cc3fb7503e5398a52bb3),
-`access-package` run [31102086459](https://github.com/Ticoworld/fiber-latch/actions/runs/31102086459),
-Node 22 and Node 24 passed, and an independent grant-wide review was recorded
-as APPROVE for the pre-final baseline. The combined validation total
-was 304 passed tests with zero skipped or todo tests. These are valid early
-implementation and documentation evidence, not the final grant-completion
-submission. The documentation and final report remain IN PROGRESS - FINAL
-WEEKS 5-6 VERIFICATION PENDING.
-Weeks 5-6 remain for external-developer usability, installability,
-documentation cleanup, final acceptance, and final verification. Limitation:
-this evidence update changes documentation status only and does not alter
-runtime behaviour or package limitations.
+Final Weeks 5-6 evidence includes the public npm distribution, adopter-facing
+README cleanup, packed consumer validation, clean external registry
+installability, formal specification reconciliation, final `0.1.1` patch
+release, and final registry verification. The final package source commit
+`cac78216a803b5e287fa5c92ad0270226caf35e1` passed [master CI run
+32457825277](https://github.com/Ticoworld/fiber-latch/actions/runs/32457825277)
+and [grant-branch CI run
+32457829076](https://github.com/Ticoworld/fiber-latch/actions/runs/32457829076),
+including Node 22 and Node 24, backend tests/build, access-package
+verification, and paid-resource verification.
+
+The separate registry-only consumer installed `@fiberlatch/access@0.1.1`
+directly from npm and passed package-root ESM, CommonJS, and TypeScript checks;
+claim construction, Ed25519 signing, verification, trusted bindings, first
+redemption, and replay denial as `receipt_exhausted`. It used no workspace
+files and confirmed that no repository-only development scripts were exposed
+by the installed package.
 
 ## 13. Public API summary
 
@@ -240,16 +239,17 @@ trusted host payment result
 
 ## 15. Package-distribution proof
 
-The package kept `private: true` as an npm publication safeguard during
-pre-publication verification. It is now published to npm as
-`@fiberlatch/access@0.1.0`. The repository builds it, runs package-level tests,
-runs publint and ATTW, and exercises external ESM, CommonJS, and TypeScript
-consumers. The paid-resource acceptance packs the package locally, installs
-that tarball into a copied clean consumer, checks for source/distribution
-imports, and reruns the example tests and demo.
+The final package is published to npm as `@fiberlatch/access@0.1.1`. The 0.1.1
+patch refreshed the adopter README and removed repository-only development
+scripts from the published manifest. Runtime JS, declarations, source maps,
+public API, and dependencies remained unchanged from 0.1.0. The repository
+builds it, runs package-level tests, runs publint and ATTW, and exercises
+external ESM, CommonJS, and TypeScript consumers. The paid-resource acceptance
+packs the package locally, installs that tarball into a copied clean consumer,
+checks for source/distribution imports, and reruns the example tests and demo.
 
-This remains a local packed-boundary proof and complements the public npm
-distribution.
+The final registry-only consumer independently installed the immutable 0.1.1
+artifact from npm and complements the local packed-boundary proof.
 
 ## 16. Paid-resource proof
 
@@ -272,22 +272,22 @@ npm ci
 npm run verify:access:grant
 ~~~
 
-The focused evidence is:
+The final focused evidence is:
 
-- 57 backend tests and backend build
+- 57 historical backend tests and backend build
 - 235 access-package tests and package build
 - publint and ATTW
 - packed ESM/CommonJS/TypeScript consumer checks
 - 12 paid-resource example tests
 - automated example success/replay demonstration
 - packed paid-resource acceptance
+- registry-only external ESM/CommonJS/TypeScript and functional consumer checks
 
-Node package CI: commit f7e5b7b72f3bec285bd09e2dd4d710fd2811238e, run 31078601378,
-Node 22 passed, Node 24 passed.
-
-Paid-resource CI: commit e06ad183f25fd35ea7570914ad38bf695940d6f3, run 31093114518,
-Node 22 passed, Node 24 passed, package verification passed, and packed
-paid-resource acceptance passed.
+Final package release source: `cac78216a803b5e287fa5c92ad0270226caf35e1`.
+Master CI run [32457825277](https://github.com/Ticoworld/fiber-latch/actions/runs/32457825277)
+and grant-branch CI run [32457829076](https://github.com/Ticoworld/fiber-latch/actions/runs/32457829076)
+both passed Node 22 and Node 24, backend tests/build, access-package
+verification, and paid-resource verification.
 
 ## 18. Security properties
 
@@ -331,9 +331,9 @@ No feature or scope expansion was added. The delivery follows the proposal's
 seven deliverables and six-week structure, with hosting cost kept at $0.
 
 The proposal describes an open-source package. This repository-distributed
-package is ISC-licensed and is now publicly available on npm as
-`@fiberlatch/access@0.1.0`; publication is a distribution and onboarding
-improvement, not a production-readiness claim. The example
+package is ISC-licensed and is publicly available on npm as
+`@fiberlatch/access@0.1.1`; the 0.1.1 publication is a distribution and
+onboarding improvement, not a production-readiness claim. The example
 uses clearly labelled server-side demo data to prove the access pattern; it
 does not claim a new live Fiber payment and does not repeat the historical live
 proof as grant work.
@@ -382,10 +382,9 @@ it is outside this review.
 ## 23. Conclusion
 
 FiberLatch Access now has a reviewable package boundary, reproducible local
-packed-distribution proof, a focused paid-resource demonstration, explicit
-security and host-responsibility limits, and an evidence map for all seven
-approved deliverables. The scope, receipt, expiration/replay, signing,
-package, and example work has verification evidence. The documentation and
-final report remain in progress pending Weeks 5-6 external-developer
-usability, installability, documentation cleanup, final acceptance, and final
-completion reporting.
+packed-distribution proof, a public `@fiberlatch/access@0.1.1` release, a clean
+registry-only external consumer verification, a focused paid-resource
+demonstration, explicit security and host-responsibility limits, and an
+evidence map for all seven approved deliverables. Technical and documentation
+delivery is complete. The final public Nervos completion post has not yet been
+submitted and is the next administrative action.

@@ -4,6 +4,18 @@ All entries describe what was proven or changed in each phase. Proof boundaries 
 
 ---
 
+## @fiberlatch/access@0.1.1 - 2026-08-21
+
+- Published `@fiberlatch/access@0.1.1` with the current adopter-facing npm
+  README.
+- Removed repository-only development scripts from the published package
+  manifest.
+- Kept runtime behavior, public API, dependencies, and Node support unchanged;
+  runtime output remained byte-identical to 0.1.0.
+- Final Node 22/24 CI and registry-only external consumer verification passed.
+
+---
+
 ## FiberLatch Access grant delivery — 2026-08-06
 
 - Completed the FiberLatch Access specifications for scope, receipt format,

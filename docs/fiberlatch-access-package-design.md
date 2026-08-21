@@ -7,7 +7,7 @@
 > still pending.
 >
 > **Current state:** The design was subsequently implemented in
-> `packages/access`, and `@fiberlatch/access@0.1.0` is publicly published. The
+> `packages/access`, and `@fiberlatch/access@0.1.1` is publicly published. The
 > current package provides the signing, verification, binding, and host-store
 > redemption APIs described here; the paid-resource example, package tests,
 > and packed-consumer checks also exist. The historical backend remains a
