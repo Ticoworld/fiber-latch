@@ -24,10 +24,10 @@ concurrency proof.
 
 ## What this does not demonstrate
 
-It does not perform real payment verification, call Fiber RPC, provide a
-production database, protect multiple processes, persist state across restarts,
-provide a frontend, or host a public service. The payment fixture is a clear
-stand-in for a real host integration, not proof of a live payment.
+It does not perform real payment verification, call Fiber RPC, authenticate
+purchasers, provide a production database, protect multiple processes, persist
+state across restarts, provide a frontend, or host a public service. The payment
+fixture is a clear stand-in for a real host integration, not proof of a live payment.
 
 ## Architecture
 
@@ -42,10 +42,26 @@ After the fixture is accepted, the host builds claims for `demo-user`,
 signer and verifier use an Ed25519 key pair generated in memory at startup.
 The private JWK is never written or logged.
 
+Each successful `POST /receipt` creates a fresh JTI and a new single-use
+allowance. This is a demo shortcut, not an idempotent purchase handler or a
+durable receipt-retrieval route. A real host must create the intended entitlement
+once, then retrieve and re-sign its persisted authority without replenishing
+quota. See the package guide's
+[idempotent issuance and receipt retrieval](../../packages/access/README.md#idempotent-entitlement-issuance)
+and [three-use lifecycle](../../packages/access/README.md#worked-lifecycle-one-purchase-three-api-uses).
+
 `GET /resource` reads `Authorization: Bearer <receipt>`. The host supplies the
 expected binding context to `redeemAccessReceipt`. Only a successful package
 result produces the protected article. Verification, binding, consumption, and
 system failures return generic denial responses.
+
+The fixed `demo-user` subject is demo-only; neither route authenticates a
+purchaser. In a real application, authenticate and authorize receipt retrieval,
+then derive the protected request's `expected.sub` from the authenticated
+session user, trusted service identity, or another host-owned authenticated
+principal. Never copy `sub` from the untrusted bearer receipt to manufacture an
+expected binding. Resource, policy, and intent expectations must likewise come
+from trusted host context.
 
 The demonstration store retains only trusted receipt authority and app state:
 receipt identity, signed authority, expiry, revocation, redemption count, and

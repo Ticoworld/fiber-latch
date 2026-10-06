@@ -1,10 +1,11 @@
 # FiberLatch Quickstart
 
-Use the first path to review the FiberLatch Access implementation baseline. It
-is not the final grant-completion record. External-developer usability,
-installation verification, documentation cleanup, final acceptance, and the
-completion report remain separate reviewer work. The historical backend path is
-kept separate from the reusable package path.
+New adopters should start with the
+[`packages/access/README.md`](packages/access/README.md) npm installation and
+integration guide. Grant delivery and final acceptance are complete; see the
+[`final report`](docs/fiberlatch-access-final-report.md). The commands here
+reproduce reviewer evidence, not required package setup. The historical backend
+path is kept separate from the reusable package path.
 
 ## 1. FiberLatch Access review path
 
@@ -56,16 +57,16 @@ npm run demo:access:example
 npm run verify:access:example
 ```
 
-`@fiberlatch/access@0.1.0` is publicly available from npm. This reviewer path
+`@fiberlatch/access@0.1.1` is publicly available from npm. This reviewer path
 still builds and packs it locally, then exercises clean
 consumers from the generated tarball. For external developer installation and
 package-root usage, use the
 [`packages/access/README.md`](packages/access/README.md) adoption guide
 instead of this reviewer-first path.
 
-This acceptance command is useful evidence for the current implementation
-baseline. It does not constitute final adoption/usability validation or final
-grant acceptance.
+This acceptance command reproduces the completed grant's local verification
+checks. It does not prove production readiness or validate a host application's
+payment trust, authentication, or persistence implementation.
 
 The paid-resource example accepts a server-side demonstration fixture. It is
 not a real Fiber payment and does not call Fiber RPC. Its automated flow issues

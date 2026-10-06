@@ -1,6 +1,10 @@
 # State Machine
 
-FiberLatch uses a narrow state machine for access intents and access receipts.
+This is the historical FiberLatch backend's state machine for access intents
+and access receipts. Payment verification belongs to that backend's host-owned
+adapter, not to `@fiberlatch/access`. The published package starts after the host
+trusts a payment or permission decision; see the
+[package guide](../packages/access/README.md).
 
 ## Access intent states
 

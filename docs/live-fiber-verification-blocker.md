@@ -1,16 +1,20 @@
 # Live Fiber Verification Status
 
-This document records the current live Fiber testnet verification boundary for FiberLatch.
+This document records historical testnet proof for the FiberLatch backend and
+its host-owned Fiber payment adapter. It does not describe a payment-verification
+feature of `@fiberlatch/access`, which starts after a trusted payment or permission
+decision. New package adopters should use the
+[package guide](../packages/access/README.md).
 
-## Current Status
+## Historical Proof Status
 
 The original live Fiber verification blocker has been resolved for a tiny testnet payment.
 
-FiberLatch has proven this flow:
+The historical backend proved this flow:
 
 `paid Fiber payment -> signed access receipt -> one-time redemption`
 
-A real paid Fiber testnet `payment_hash` was verified through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
+A real paid Fiber testnet `payment_hash` was verified by the host-owned adapter through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
 
 ## What Was Previously Blocked
 
@@ -53,6 +57,6 @@ This does not prove:
 
 ## Current Safe Claim
 
-FiberLatch proves a full testnet flow where a live paid Fiber `payment_hash` is verified through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
+The historical FiberLatch backend proves a full testnet flow where its host-owned adapter verifies a live paid Fiber `payment_hash` through Fiber v0.8.1 RPC before receipt issuance, verification, one-time redemption, and rejection on second redemption. This does not make the published access package a payment verifier.
 
 This is testnet-only proof. Production and mainnet readiness are not claimed.

@@ -158,10 +158,16 @@ console.log({ first, replay });
 // replay: { status: "consumption_denied", phase: "consumption", reason: "receipt_exhausted" }
 ~~~
 
-The example's expected bindings are trusted application context. Do not derive them
-from the untrusted bearer receipt. The [paid-resource example](https://github.com/Ticoworld/fiber-latch/blob/master/examples/paid-resource/README.md)
+The fixed `user-42` subject is demonstration-only, not authentication. In a real
+host, `expected.sub` comes from an authenticated application principal, never
+from the bearer receipt. The other expected bindings also come from trusted
+application context. The [paid-resource example](https://github.com/Ticoworld/fiber-latch/blob/master/examples/paid-resource/README.md)
 contains the complete demonstration store, HTTP boundary, concurrency
 behavior, and tests.
+
+For durable issuance, later receipt retrieval, and a three-use API entitlement,
+see [Idempotent entitlement issuance](#idempotent-entitlement-issuance) and the
+[worked lifecycle](#worked-lifecycle-one-purchase-three-api-uses).
 
 ## Common tasks and API
 
@@ -198,8 +204,52 @@ The host:
 
 1. establishes trusted payment or business authorization
 2. determines the subject, resource, policy, and intent
-3. builds canonical claims with `buildAccessReceiptClaims`
-4. signs those claims with a signer created by `createAccessReceiptSigner`
+3. finds the intended entitlement using a stable host-owned identity
+4. if absent, builds canonical claims with `buildAccessReceiptClaims` and
+   persists the entitlement once, including its `jti` and trusted authority
+5. on duplicate or concurrent delivery, loads the existing persisted entitlement
+6. signs claims from that persisted authority with a signer created by
+   `createAccessReceiptSigner`
+
+### Idempotent entitlement issuance
+
+A trusted payment or permission event may arrive more than once. This is unsafe:
+
+~~~text
+each delivery -> new jti -> new entitlement -> fresh quota
+~~~
+
+Instead, the host derives or finds a stable entitlement identity for the
+trusted event and its intended grant. It atomically creates that entitlement
+only once, persisting the canonical claim authority (including `jti`, subject,
+audience, resource, policy, intent, payment reference, timestamps, and redemption
+limit) alongside the host's consumption and revocation state. A duplicate
+delivery retrieves the existing entitlement; if concurrent inserts race, use
+the persisted winner, not a newly generated losing proposal.
+
+The safety property is **one authority event -> one intended entitlement**.
+Exact uniqueness keys are application-specific; `payment_ref` is a host
+reference, not a library-enforced uniqueness key or payment proof. FiberLatch
+does not provide issuance persistence, webhook deduplication, or database
+transactions. Those remain host responsibilities, distinct from atomic
+redemption through `AccessReceiptStore`.
+
+### Receipt retrieval is not entitlement creation
+
+Fetching a receipt later normally means:
+
+1. authenticate the requester and authorize access to the existing entitlement
+2. load its persisted trusted authority and current host state
+3. reconstruct its claims with `buildAccessReceiptClaims`
+4. sign those existing claims for delivery
+
+Retrieval or re-signing must not automatically generate a new `jti`, reset the
+redemption count, increase `max_redemptions`, create another entitlement for the
+same purchase, or extend its expiry. Re-signing is delivery of the same grant,
+not renewal: every delivered token for it consumes the same stored allowance.
+The host decides whether to deliver a receipt for an expired, exhausted, or
+revoked entitlement; signing it does not restore access. Renewal or an extra
+grant requires a separate explicit host authorization decision.
 
 ### Access order
 
@@ -212,21 +262,126 @@ The host:
 5. calls `redeemAccessReceipt`
 6. makes the final serve-or-deny decision
 
+Before access, the host authenticates the user or service through its own
+mechanism. `expected.sub` must come from that trusted context, such as a
+validated session user, trusted service identity, or another authenticated
+principal. Do not decode the untrusted bearer receipt, copy its `sub` into
+`expected.sub`, and treat that as a binding check. A receipt is not a replacement
+for application authentication.
+
 After the verifier returns `verifiedClaims`, a direct binding check uses trusted
-application context rather than receipt fields:
+application context rather than receipt fields. Here `authenticatedPrincipal`
+is the host-authenticated identity and `authorizedIntent` is an intent the host
+has authorized for that principal; the resource and policy are route-owned:
 
 ~~~js
 const binding = evaluateAccessReceiptBindings(verifiedClaims, {
-  sub: "user-42",
+  sub: authenticatedPrincipal.id,
   resource_id: "course/module-1",
   policy_id: "single-access-v1",
-  intent_id: "intent-42",
+  intent_id: authorizedIntent.id,
 });
 
 if (binding.status !== "matched") {
   // Deny access; this is not an application crash.
 }
 ~~~
+
+## Worked lifecycle: one purchase, three API uses
+
+Scenario: after the application trusts a purchase, its user can call a specific
+private API three times. These are host-integration fragments using the package
+imports and key setup from the quick start, not another standalone application.
+The host-owned values and persistence steps below are not extra FiberLatch APIs.
+
+**Create once.** The host first validates the purchase outside FiberLatch and
+maps it to trusted `purchase.subjectId`, `purchase.intentId`, and
+`purchase.paymentRef`. It looks up the stable entitlement identity. Only when
+the entitlement is absent does it propose these claims, with issuer, audience,
+resource, and policy chosen by the host:
+
+~~~js
+import { randomUUID } from "node:crypto";
+
+const now = Math.floor(Date.now() / 1000);
+const claimsForCreation = buildAccessReceiptClaims({
+  iss: issuer,
+  sub: purchase.subjectId,
+  aud: audience,
+  iat: now,
+  nbf: now,
+  exp: now + 300,
+  jti: randomUUID(),
+  intent_id: purchase.intentId,
+  resource_id: "private-api/report",
+  policy_id: "three-uses-v1",
+  payment_ref: purchase.paymentRef,
+  grant_type: "multi_redemption",
+  max_redemptions: 3,
+});
+~~~
+
+The host atomically persists the new entitlement's claims and initial unused
+state once. `persistedAuthority` below is the canonical claims loaded from the
+winning durable record, whether this delivery created it or found it already
+present. Do not sign or serve a proposed grant if persistence failed or its
+outcome is unknown. Duplicate events and later retrieval skip creation and do
+not reset consumption state.
+
+**Deliver the receipt.** After authenticating and authorizing the requester,
+the issuing host loads that entitlement and uses its configured `signer`:
+
+~~~js
+const receiptClaims = buildAccessReceiptClaims(persistedAuthority);
+const token = await signer(receiptClaims);
+~~~
+
+**Redeem at the protected API.** The resource service uses trusted public-key,
+issuer, and audience configuration; it does not need the signing private key.
+It authenticates the caller as `authenticatedPrincipal` and obtains
+`authorizedIntent` from trusted host context. Its `store` implements the
+[atomic consumption contract](#implementing-accessreceiptstore) over the same
+entitlement authority and allowance, not a fresh counter per token or request:
+
+~~~js
+const verifier = await createAccessReceiptVerifier({
+  publicKeys: [publicJwk],
+  issuer,
+  audience,
+});
+const result = await redeemAccessReceipt({
+  token,
+  expected: {
+    sub: authenticatedPrincipal.id,
+    resource_id: "private-api/report",
+    policy_id: "three-uses-v1",
+    intent_id: authorizedIntent.id,
+    max_redemptions: 3,
+  },
+  verifier,
+  store,
+  current_time: Math.floor(Date.now() / 1000),
+});
+~~~
+
+The host serves the protected action only for `result.status === "success"`.
+For valid bindings and an unrevoked receipt before expiry, the same entitlement
+has this lifecycle:
+
+| API attempt | Package result | Host action |
+| --- | --- | --- |
+| 1 | `success`, `exhausted: false` | Serve; one use recorded. |
+| 2 | `success`, `exhausted: false` | Serve; two uses recorded. |
+| 3 | `success`, `exhausted: true` | Serve the final allowed use; entitlement is now exhausted. |
+| 4 | `consumption_denied`, `reason: "receipt_exhausted"` | Deny; no protected action. |
+
+Production redemption must atomically check authority, revocation, expiry, and
+remaining uses and record consumption. If two requests compete for the final
+slot, at most one may succeed. The quick start's single-use `Set` store is not
+a three-use store, and neither it nor the paid-resource example's one-process
+store provides distributed guarantees. FiberLatch supplies the contract, not
+the production persistence layer. Retrieving or re-signing this receipt after
+use three does not restore its quota.
 
 ## Claims and issuance reference
 
@@ -372,6 +527,7 @@ redemption, persist or revoke receipts, or make the final access decision.
 Avoid these mistakes:
 
 - Do not use `payment_ref` as payment proof.
+- Do not create a fresh entitlement on each event delivery or receipt retrieval.
 - Do not derive trusted expected bindings from the bearer receipt itself.
 - Do not treat a valid signature as final resource authorization.
 - Do not rely on `jti` alone for replay protection.

@@ -21,4 +21,9 @@ What that means in practice:
 - no broad payment abstraction layer
 - no public endpoint that exposes raw Fiber RPC responses
 
-The only purpose of FiberLatch is to turn a verified payment signal into a signed access receipt, then let callers verify and redeem that receipt against a specific resource and subject.
+FiberLatch Access starts after the host application has already trusted a payment
+or permission decision. It turns that trusted decision into a signed, scoped
+access receipt that callers can verify and redeem against host-supplied bindings.
+Payment trust remains host-owned. Fiber payments were the original project
+context; the historical backend's payment adapter is not part of the published
+access package. See the [package guide](../packages/access/README.md).

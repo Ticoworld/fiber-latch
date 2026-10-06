@@ -75,6 +75,8 @@ receipt against trusted request context and record its use in your app's store.
 
 See the [FiberLatch Access package guide](packages/access/README.md) for the
 complete issuance, redemption, error, store, and CommonJS documentation.
+It also explains [idempotent entitlement issuance and receipt retrieval](packages/access/README.md#idempotent-entitlement-issuance)
+and walks through [one purchase granting three API uses](packages/access/README.md#worked-lifecycle-one-purchase-three-api-uses).
 
 ## What FiberLatch Access provides
 

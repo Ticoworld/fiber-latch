@@ -1,6 +1,9 @@
 # API Contract
 
-FiberLatch exposes a small public API. The contract is intentionally narrow.
+This is the historical FiberLatch backend's HTTP API, not the published
+`@fiberlatch/access` package API. Its host-owned payment adapter establishes
+payment trust. The package starts after a trusted payment or permission decision;
+see the [package guide](../packages/access/README.md) for its public API.
 
 ## `POST /v1/access-intents`
 

@@ -1,5 +1,10 @@
 # Reviewer Notes
 
+These notes describe the historical FiberLatch backend and its host-owned Fiber
+payment adapter. The published access package starts after the host trusts a
+payment or permission decision; it does not verify payments. New adopters should
+use the [package guide](../packages/access/README.md).
+
 Start here:
 - [`QUICKSTART.md`](../QUICKSTART.md)
 - [`README.md`](../README.md)
@@ -44,4 +49,4 @@ Why this does not overlap Spindle, checkout, POS, or creator tooling:
 - FiberLatch does not collect payment at checkout
 - FiberLatch does not manage merchant operations
 - FiberLatch does not expose creator workflows
-- FiberLatch only verifies payment state and issues access receipts for a specific resource and subject
+- the host establishes payment or permission trust; FiberLatch Access issues and verifies scoped access receipts for a specific resource and subject

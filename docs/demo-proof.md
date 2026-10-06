@@ -1,6 +1,10 @@
 # Demo Proof
 
-This demo proves the local FiberLatch receipt lifecycle end to end using the fake Fiber adapter and local SQLite.
+This historical backend demo proves the local receipt lifecycle end to end using
+the fake Fiber adapter and local SQLite. Payment verification is a host-owned
+backend responsibility, not a feature of the published `@fiberlatch/access`
+package. For the current package and paid-resource example, start with the
+[package guide](../packages/access/README.md).
 
 What the demo proves:
 - an access intent can be created locally
@@ -36,8 +40,8 @@ What remains unproven:
 - routing for large payment amounts
 
 Honest claim:
-FiberLatch proves its local receipt lifecycle end to end.
-FiberLatch also proves a full testnet path: a live paid Fiber `payment_hash` was verified through Fiber v0.8.1 RPC, converted into a signed access receipt, verified, redeemed once, and rejected on second redemption.
+The historical FiberLatch backend proves its local receipt lifecycle end to end.
+That backend also proves a full testnet path: its host-owned adapter verified a live paid Fiber `payment_hash` through Fiber v0.8.1 RPC before receipt issuance, verification, one-time redemption, and rejection on second redemption.
 This is testnet-only proof. See `scripts/demo-live-paid-issuance.ts` and the tagged commit `fiberlatch-live-paid-proof`.
 
 ## Protected resource demo
