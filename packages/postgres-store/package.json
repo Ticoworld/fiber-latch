@@ -6,6 +6,7 @@
   "description": "Unpublished internal PostgreSQL AccessReceiptStore proof.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": ["dist", "sql", "README.md", "ACCEPTANCE.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.test.json",
