@@ -1,0 +1,22 @@
+{
+  "name": "fiberlatch-postgres-store-internal",
+  "version": "0.0.0-development",
+  "private": true,
+  "type": "module",
+  "description": "Unpublished internal PostgreSQL AccessReceiptStore proof.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.test.json",
+    "test": "tsx test/neon.ts",
+    "db:check": "node scripts/database.mjs check",
+    "db:apply": "node scripts/database.mjs apply"
+  },
+  "engines": { "node": ">=22.12.0" },
+  "peerDependencies": { "@fiberlatch/access": "0.1.1" },
+  "devDependencies": {
+    "@types/pg": "8.20.0",
+    "pg": "8.23.1"
+  }
+}
