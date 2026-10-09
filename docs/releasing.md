@@ -47,8 +47,12 @@ Trusted publishing → GitHub Actions. Use owner `Ticoworld`, repository
 `fiber-latch`, and that package's exact workflow filename above. If an environment
 is used, its name must match on both sides. Future workflows should be manual
 `workflow_dispatch` only, use a fixed package/workspace, and require explicit
-version, source-tag/SHA and release-confirmation inputs. Run from protected
-master; checkout the approved source SHA separately. Do not publish on push,
+version, source-tag/SHA and release-confirmation inputs. Merge the workflow into
+protected master first. Dispatch manually at the approved package-specific source
+tag, and verify that the tag's peeled commit, checkout HEAD and `github.sha` all
+match the approved SHA reachable from master. Do not dispatch at current master
+and then build a different commit: provenance uses the triggering SHA. The
+reviewed workflow must also exist at the source tag. Do not publish on push,
 tag creation, PR merge or GitHub release events.
 
 Before enabling publishing, a maintainer must review the workflow PR, configure
@@ -77,7 +81,7 @@ The local PostgreSQL 0.1.0 release does not acquire provenance retroactively.
    package-specific annotated tag at the exact approved source commit, never a
    later documentation/merge commit. Verify the tag target and master ancestry.
 2. The manual workflow must verify its fixed package name, exact requested
-   version, tag pattern and peeled SHA, clean checkout, and successful required
+   version, dispatch ref, tag pattern and peeled SHA, clean checkout, and successful required
    CI for that source. If master moved, update through a merge and revalidate.
 3. Query the public registry immediately before publication. An existing version
    blocks publishing. Only a clear not-found response is availability evidence;
@@ -146,6 +150,7 @@ Requirements checked October 9, 2026; recheck before implementing the publisher:
 - [npm Trusted Publishing](https://docs.npmjs.com/trusted-publishers/)
 - [npm provenance](https://docs.npmjs.com/generating-provenance-statements/)
 - [GitHub OIDC](https://docs.github.com/en/actions/concepts/security/openid-connect)
+- [GitHub manual dispatch identity](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch)
 - [GitHub release immutability](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/establish-provenance-and-integrity/prevent-release-changes)
 
 Manual work remains: implement/review the two non-automatic release workflows,
