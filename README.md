@@ -19,6 +19,17 @@ The package supports Node.js `>=22.12.0`. It is native ESM, with supported
 CommonJS package-root usage through Node's `require(esm)` behavior. There is no
 browser runtime.
 
+`@fiberlatch/access@0.1.1` remains the database-neutral core. For PostgreSQL,
+the optional `@fiberlatch/postgres-store@0.1.0` companion implements its existing
+`AccessReceiptStore` persistence/consumption boundary:
+
+```sh
+npm install @fiberlatch/access@0.1.1 @fiberlatch/postgres-store@0.1.0
+```
+
+See the [PostgreSQL store guide](packages/postgres-store/README.md) for explicit
+schema setup, a caller-owned query executor, and a minimal redemption example.
+
 ## Why use FiberLatch?
 
 Use FiberLatch when your app needs to give limited access after it has already
@@ -90,7 +101,9 @@ and walks through [one purchase granting three API uses](packages/access/README.
 ## Responsibility boundary
 
 FiberLatch Access owns the receipt boundary. The host owns the surrounding
-business and persistence decisions.
+business and persistence decisions, including payment trust, authentication,
+identity, entitlement creation, business policy, receipt delivery, database
+connections, transactions, retries, and the final protected action.
 
 | FiberLatch Access | Host application |
 | --- | --- |
@@ -102,9 +115,12 @@ business and persistence decisions.
 | Fail-closed redemption result mapping | Final resource access decision |
 
 `payment_ref` is a reference that can link a receipt to a payment record, not
-payment proof. The package does not perform payment verification, call Fiber
+payment proof. The core package does not perform payment verification, call Fiber
 RPC during normal verification or redemption, persist receipts, revoke
-receipts, or ship a production database adapter.
+receipts, or own database operation. The core remains persistence-neutral;
+an optional PostgreSQL `AccessReceiptStore` implementation is available as
+`@fiberlatch/postgres-store`. It enforces persisted authority, revocation,
+validity, and bounded consumption while the host keeps the responsibilities above.
 
 ## Runnable example
 
@@ -125,8 +141,9 @@ payment, and its in-memory store is not distributed replay protection.
 - No browser runtime
 - No payment verification inside `@fiberlatch/access`
 - No normal-redemption Fiber RPC call
-- No production database adapter
-- No distributed replay-protection implementation
+- Persistence-neutral core; optional PostgreSQL store for bounded consumption
+- Distributed bounded consumption requires authoritative PostgreSQL state or
+  another host-provided atomic store; the example's in-memory store is local only
 - No production-readiness or mainnet-readiness claim
 - No formal security-audit claim
 

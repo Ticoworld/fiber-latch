@@ -4,6 +4,19 @@ All entries describe what was proven or changed in each phase. Proof boundaries 
 
 ---
 
+## @fiberlatch/postgres-store@0.1.0 - 2026-10-09
+
+- Published the first optional PostgreSQL `AccessReceiptStore` companion package.
+- Implements the existing `@fiberlatch/access@0.1.1` store contract; no changes
+  were made to `@fiberlatch/access@0.1.1`.
+- Keeps connections, transactions, retries, payment trust, authentication and
+  application business policy host-owned.
+- Proven with real PostgreSQL/Neon acceptance and bounded final-slot concurrency.
+- Proven as a reusable replacement for custom consumption logic in the
+  FiberLatch reference app and FiberFlow integration.
+
+---
+
 ## @fiberlatch/access@0.1.1 - 2026-08-21
 
 - Published `@fiberlatch/access@0.1.1` with the current adopter-facing npm
