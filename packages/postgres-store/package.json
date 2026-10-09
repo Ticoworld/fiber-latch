@@ -1,23 +1,49 @@
 {
-  "name": "fiberlatch-postgres-store-internal",
-  "version": "0.0.0-development",
-  "private": true,
+  "name": "@fiberlatch/postgres-store",
+  "version": "0.1.0",
   "type": "module",
-  "description": "Unpublished internal PostgreSQL AccessReceiptStore proof.",
+  "description": "A PostgreSQL AccessReceiptStore for FiberLatch bounded receipt redemption.",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ticoworld/fiber-latch.git",
+    "directory": "packages/postgres-store"
+  },
+  "homepage": "https://github.com/Ticoworld/fiber-latch/tree/master/packages/postgres-store#readme",
+  "bugs": { "url": "https://github.com/Ticoworld/fiber-latch/issues" },
+  "keywords": ["fiberlatch", "postgresql", "access-receipt", "bounded-redemption"],
+  "publishConfig": { "access": "public" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "sql", "README.md", "ACCEPTANCE.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "module-sync": "./dist/index.js",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./sql/001_access_receipts.sql": "./sql/001_access_receipts.sql"
+  },
+  "sideEffects": false,
+  "files": ["dist/index.js", "dist/index.d.ts", "sql/001_access_receipts.sql", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
     "check": "tsc -p tsconfig.test.json",
-    "test": "tsx test/neon.ts",
+    "test": "node scripts/verify-package.mjs",
+    "test:neon": "tsx test/neon.ts",
+    "test:distribution:neon": "node scripts/verify-package.mjs --neon",
     "db:check": "node scripts/database.mjs check",
     "db:apply": "node scripts/database.mjs apply"
   },
   "engines": { "node": ">=22.12.0" },
   "peerDependencies": { "@fiberlatch/access": "0.1.1" },
   "devDependencies": {
+    "@types/node": "22.19.19",
     "@types/pg": "8.20.0",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "tsx": "4.22.0",
+    "typescript": "5.9.3"
   }
 }
