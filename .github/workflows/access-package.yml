@@ -4,17 +4,14 @@ on:
   push:
     paths:
       - "packages/access/**"
+      - "packages/postgres-store/**"
       - "examples/paid-resource/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/access-package.yml"
   pull_request:
-    paths:
-      - "packages/access/**"
-      - "examples/paid-resource/**"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/access-package.yml"
+    # Required checks must run even for documentation-only PRs.
+    branches: [master]
 
 permissions:
   contents: read
@@ -55,3 +52,16 @@ jobs:
 
       - name: Verify paid-resource example
         run: npm run verify:access:example
+
+      - name: Typecheck and build PostgreSQL store
+        run: |
+          npm run check --workspace @fiberlatch/postgres-store
+          npm run build --workspace @fiberlatch/postgres-store
+
+      - name: Verify PostgreSQL store distribution
+        run: npm test --workspace @fiberlatch/postgres-store
+
+      - name: Check PostgreSQL store package metadata and types
+        run: |
+          node packages/access/node_modules/publint/src/cli.js run --strict packages/postgres-store
+          npx --no-install attw --pack packages/postgres-store --profile esm-only --entrypoints .
