@@ -5,9 +5,9 @@
   "description": "Signed, scoped access receipts for applications after trusted payment or permission decisions.",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "node scripts/legacy-server-retired.cjs",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "node scripts/legacy-server-retired.cjs",
     "test": "vitest run tests",
     "test:watch": "vitest",
     "fiber:testnet:verify": "tsx scripts/fiber-testnet-verify.ts",

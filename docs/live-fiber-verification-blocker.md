@@ -6,6 +6,14 @@ feature of `@fiberlatch/access`, which starts after a trusted payment or permiss
 decision. New package adopters should use the
 [package guide](../packages/access/README.md).
 
+**29 October 2026 — operational boundary:** the historical service is not approved
+for paid-resource authorization and its network server is retired. The preserved
+testnet proof below demonstrates payment status followed by receipt issuance and
+redemption; it does not demonstrate purchaser/purchase, amount/asset or resource
+binding. In-process reproduction remains available. See
+[legacy service status](legacy-service-status.md); no package release or historical
+proof is changed by this retirement.
+
 ## Historical Proof Status
 
 The original live Fiber verification blocker has been resolved for a tiny testnet payment.

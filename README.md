@@ -9,6 +9,13 @@ resource.
 FiberLatch does not verify that a payment happened. Your app makes that
 decision first, then uses FiberLatch to issue and safely check access later.
 
+The historical Fastify/Prisma service under `src/` is **not approved for
+operational paid-resource authorization**. Its payment-status lookup does not
+establish payment-to-purchase ownership, expected amount/asset, or intended
+resource binding. Its network server is retired; the code remains for historical
+tests and in-process demonstrations. This is separate from the maintained npm
+packages. See the [legacy service status](docs/legacy-service-status.md).
+
 ## Install
 
 ```sh
@@ -105,6 +112,11 @@ business and persistence decisions, including payment trust, authentication,
 identity, entitlement creation, business policy, receipt delivery, database
 connections, transactions, retries, and the final protected action.
 
+Before signing a paid-access receipt, the host must authenticate the purchaser,
+validate the trusted payment's amount, asset and intended purchase, and bind it
+to the subject, resource, policy and one durable entitlement. A client-supplied
+payment reference or a paid status alone is insufficient.
+
 | FiberLatch Access | Host application |
 | --- | --- |
 | Receipt claim validation | Payment or business verification |
@@ -161,6 +173,12 @@ npm run build
 npm run verify:access:package
 npm run verify:access:example
 ```
+
+The root `npm run dev` and `npm start` intentionally refuse server startup.
+The historical app also refuses network listening when imported directly;
+there is no environment flag to enable it. Existing backend tests and demos
+use in-process injection. Retirement does not add the missing authorization
+checks or make the retained service logic safe to embed operationally.
 
 Package adopters should use npm. Contributors can inspect the package source
 under `packages/access/src`, its tests under `packages/access/test`, and the

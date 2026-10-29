@@ -6,6 +6,14 @@ backend responsibility, not a feature of the published `@fiberlatch/access`
 package. For the current package and paid-resource example, start with the
 [package guide](../packages/access/README.md).
 
+**29 October 2026 — scope clarification:** the historical service is not approved
+for operational paid-resource authorization. Payment status alone does not bind
+a payment to the correct purchaser, purchase, amount/asset or resource. Network
+serving is retired; the demonstrations remain available through in-process
+injection with no listener opt-in. These proofs establish receipt mechanics,
+not the missing purchase authorization. The npm packages require that trusted
+host decision before signing. See [legacy service status](legacy-service-status.md).
+
 What the demo proves:
 - an access intent can be created locally
 - the fake Fiber adapter can report a paid state
