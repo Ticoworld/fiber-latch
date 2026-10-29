@@ -81,6 +81,15 @@ This path covers the existing Fastify/Prisma backend foundation. It is retained
 for context and regression evidence; it is not the grant package installation
 path.
 
+**Historical/reference use only; not approved for operational paid-resource
+authorization.** The service checks payment status without establishing purchase
+ownership, expected amount/asset or payment-to-resource binding. The current tree
+retires network serving: root `dev`/`start` refuse startup, and the historical app
+refuses listening even when imported. No configuration switch re-enables it.
+Tests and demos below use in-process injection, not a network service. See
+[legacy service status](docs/legacy-service-status.md) for the boundary and the
+checks required before any maintained operational reuse.
+
 ### Install and local environment
 
 ```sh
@@ -112,6 +121,10 @@ npm run demo:protected-resource
 The local demo creates an intent, issues a signed receipt, grants the first
 redemption, and denies the second. The fake Fiber adapter is only a local test
 fixture; it does not represent a real Fiber payment.
+
+These demos remain historical reproductions of receipt mechanics. Passing them
+does not establish payment-to-purchase authorization. Package hosts must establish
+trusted payment, purchaser and entitlement bindings before signing receipts.
 
 ### Historical live Fiber proof
 

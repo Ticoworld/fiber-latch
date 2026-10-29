@@ -14,6 +14,7 @@ import { registerHealthRoute } from "./routes/health";
 import { registerJwksRoute } from "./routes/jwks";
 import { registerReceiptRedemptionRoute } from "./routes/receipt-redemption";
 import { registerReceiptVerificationRoute } from "./routes/receipt-verification";
+import { historicalServerFactory } from "./legacy-retirement";
 
 export interface BuildAppOptions {
   logger?: boolean;
@@ -37,7 +38,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     options.receiptSigner ??
     createJwtAccessReceiptSigner(signingKeyMaterial, runtimeConfig.issuer, runtimeConfig.audience);
   const service = new FiberLatchService(prisma, fiberClient, receiptSigner, runtimeConfig);
-  const app = Fastify({ logger: options.logger ?? false });
+  const app = Fastify({
+    logger: options.logger ?? false,
+    serverFactory: historicalServerFactory,
+  });
 
   app.decorate("fiberLatch", service);
 

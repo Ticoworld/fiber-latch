@@ -5,6 +5,15 @@ payment adapter. The published access package starts after the host trusts a
 payment or permission decision; it does not verify payments. New adopters should
 use the [package guide](../packages/access/README.md).
 
+**29 October 2026 — legacy service retirement:** this Fastify/Prisma reference
+is not approved for operational paid-resource authorization. Its status lookup
+does not validate purchase ownership, expected amount/asset or intended resource.
+The current server and app listener refuse network serving; there is no opt-in.
+In-process tests/demos and historical proof remain available; they do not prove
+those missing authorization properties. See [legacy service status](legacy-service-status.md).
+The maintained npm packages remain separate and require trusted host payment and
+entitlement bindings before signing.
+
 Start here:
 - [`QUICKSTART.md`](../QUICKSTART.md)
 - [`README.md`](../README.md)

@@ -6,6 +6,11 @@ adapter, not to `@fiberlatch/access`. The published package starts after the hos
 trusts a payment or permission decision; see the
 [package guide](../packages/access/README.md).
 
+**29 October 2026:** these are historical states, not an operational authorization
+contract. The service's payment-status lookup lacks purchase ownership,
+amount/asset and resource binding. Its network server is retired; in-process
+regression evidence is retained. See [legacy service status](legacy-service-status.md).
+
 ## Access intent states
 
 - `PENDING_VERIFICATION`

@@ -1,17 +1,5 @@
-import { buildApp } from "./app";
+import { LEGACY_SERVER_RETIRED_MESSAGE } from "./legacy-retirement";
 
-async function main(): Promise<void> {
-  const port = Number(process.env.PORT ?? 3000);
-  const host = process.env.HOST ?? "0.0.0.0";
-  const app = await buildApp({ logger: true });
-
-  await app.listen({
-    port: Number.isFinite(port) ? port : 3000,
-    host,
-  });
-}
-
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exit(1);
-});
+// Refuse before loading application configuration, signing keys, Prisma or RPC.
+console.error(LEGACY_SERVER_RETIRED_MESSAGE);
+process.exitCode = 1;

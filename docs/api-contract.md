@@ -1,9 +1,20 @@
-# API Contract
+# Historical API Contract
 
 This is the historical FiberLatch backend's HTTP API, not the published
-`@fiberlatch/access` package API. Its host-owned payment adapter establishes
-payment trust. The package starts after a trusted payment or permission decision;
-see the [package guide](../packages/access/README.md) for its public API.
+`@fiberlatch/access` package API. **The service is not approved for operational
+paid-resource authorization.** Its adapter looks up payment status; it does not
+establish payment-to-purchase ownership, expected amount/asset, or intended
+resource binding. A signed receipt does not repair those missing checks.
+
+Network serving is retired in the current tree. Root `dev`/`start` refuse startup,
+and the historical app refuses both Fastify and raw-server listening. No runtime
+or environment opt-in is provided. The routes below describe historical behavior
+preserved for in-process tests/demos, not an available network API. See
+[legacy service status](legacy-service-status.md).
+
+The maintained receipt packages start after a trusted host payment or permission
+decision. Hosts must establish trusted purchaser, purchase and entitlement
+bindings before signing. See the [package guide](../packages/access/README.md).
 
 ## `POST /v1/access-intents`
 
